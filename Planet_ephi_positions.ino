@@ -6,23 +6,23 @@
 //------------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------------
 
-// Symbol:   Bedeutung:
-//   a      grosse Halbachse
-//   e      Exzentrität
-//   t0     Zeitpunkt des Periheldurchgangs
-//   T      Umlaufzeit
-//   Ω      Länge des aufsteigenden Knotens
-//   i      Neigung der Bahnebene zur Ekliptik
-//   ω      Winkel zwischen Perihel und aufsteigendem Knoten
+// Sechs Bahnelemente:
+// a: Länge der großen Halbachse
+// e: numerische Exzentrizität
+// i: Bahnneigung, Inklination
+// Ω: Länge/Rektaszension des aufsteigenden Knotens
+// ω: Argument der Periapsis, Periapsisabstand
+// t: Zeitpunkt der Periapsispassage, Periapsiszeit, Epoche des Periapsisdurchgangs
+// T: Umlaufzeit
 
 // Tables:
-const int day_of_month[13] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-String planet_name[8] = {"Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptun"};
+String object_name[8] = {"Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptun"};
 String star_name[1] = {"Sun"};
 
-const float planet_data[8][7] = {// a, e, t0, T, Ω, i, ω
+// http://ssd.jpl.nasa.gov/txt/aprx_pos_planets.pdf
+const float object_data[8][7] = {// a, e, i, L, ω, Ω
   {0, 0, 0, 0, 0, 0, 0}, // Mercury
-  {0, 0, 0, 0, 0, 0, 0}, // Venus
+  {0.72333566, 0.00677672, 3.39467605, 181.97909950, 131.60246718, 76.67984255, 0}, // Venus
   {0, 0, 0, 0, 0, 0, 0}, // Earth
   {0, 0, 0, 0, 0, 0, 0}, // Mars
   {0, 0, 0, 0, 0, 0, 0}, // Jupiter
@@ -35,7 +35,7 @@ void setup() {
 
   Serial.begin(9600);
 
-  float jd = julian_date_now (23, 4, 2016, 17, 31, 00);
+  float jd = get_julian_date (26, 12, 2016, 12, 00, 00);
   Serial.println("JD:" + String(jd));
 
 }
@@ -45,7 +45,7 @@ void loop() {
 
 }
 //------------------------------------------------------------------------------------------------------------------
-float julian_date_now (float day_, float month_, float year_, float hour_, float minute_, float seconds_) { // UTC
+float get_julian_date (float day_, float month_, float year_, float hour_, float minute_, float seconds_) { // UTC
 
   if (month_ <= 2) {
     year_ -= 1;
