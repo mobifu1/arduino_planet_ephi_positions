@@ -34,7 +34,8 @@ const float planet_data[8][7] = {// a, e, t0, T, Ω, i, ω
 void setup() {
 
   Serial.begin(9600);
-  float jd = julian_date_now (23, 12, 2016, 12, 00);
+
+  float jd = julian_date_now (23, 4, 2016, 17, 31, 00);
   Serial.println("JD:" + String(jd));
 
 }
@@ -44,31 +45,15 @@ void loop() {
 
 }
 //------------------------------------------------------------------------------------------------------------------
-float julian_date_now (float day_, float month_, float year_, float hour_, float minute_) { // UTC
+float julian_date_now (float day_, float month_, float year_, float hour_, float minute_, float seconds_) { // UTC
 
-  float jd = 0;
-  float ut = (hour_ + (minute_ / 60));
-
-  jd = julian_date_0(year_);
-  jd += days_to_month(month_) + day_;
-  jd += (ut - 12) / 24;
-  return jd;
-};
-//------------------------------------------------------------------------------------------------------------------
-float julian_date_0(float year_) {
-
-  float jd0 = (4712 + year_) * 365.24806317;
-  Serial.println("JD0:" + String(jd0));//2457389 = 1.1.2016 12:00 UTC / 2451545 = 1.1.2000 12:00 UTC
-  return jd0;
-};
-//------------------------------------------------------------------------------------------------------------------
-float days_to_month(float month_) {
-
-  float result = 0;
-  for (int m = 1; m < (int)month_; m++) {
-    result += (float)day_of_month[m];
+  if (month_ <= 2) {
+    year_ -= 1;
+    month_ += 12;
   }
-  return result;
-};
-//------------------------------------------------------------------------------------------------------------------
 
+  hour_ = (hour_ / 24) + (minute_ / 1440) + (seconds_ / 86400);
+  long B = 2 - (int)(year_ / 100)  + (int)(year_ / 100 / 4);
+  float jd = (long)(365.25 * (year_ + 4716)) + (long)(30.6001 * (month_ + 1)) + day_ + hour_ + (float)B - 1524.5;
+  return jd;
+}
