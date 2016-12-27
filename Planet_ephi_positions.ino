@@ -138,7 +138,7 @@ float calc_eccentricAnomaly (float meanAnomaly, float eccentricity) { //271.60 d
   }
 
   eccentricAnomaly *= deg;
-  return eccentricAnomaly; //174.3823298500084
+  return eccentricAnomaly; //174.3823298500084 ????
 }
 //------------------------------------------------------------------------------------------------------------------
 void orbitalCoordinates (float semiMajorAxis, float eccentricity, float eccentricAnomaly) {
@@ -151,6 +151,8 @@ void orbitalCoordinates (float semiMajorAxis, float eccentricity, float eccentri
   float radius = semiMajorAxis * (1 - eccentricity * cos(eccentricAnomaly));
   Serial.println("lambda:" + String(lambda, DEC));
   Serial.println("radius:" + String(radius, DEC));
+  //lambda  :   271.52
+  //radius  : 0.7231735791216789
 
   calc_vector(0, lambda, radius, "spherical"); // x=beta / y=lambda / z=r
 
@@ -162,7 +164,7 @@ void calc_vector(float x, float y, float z, String mode) { // x = beta / y = lam
 
   if (mode == "cartesian") {
   }
-  if (mode == "spherical") {
+  if (mode == "spherical") {//heliocentricOrbital
     // x = beta / y = lambda / z = radius
     x = z * cos(x) * cos(y);
     y = z * cos(x) * sin(y);
@@ -182,7 +184,7 @@ void calc_vector(float x, float y, float z, String mode) { // x = beta / y = lam
   if (x < 0 && y > 0)lon =  pi + atan(y / x);
   if (x < 0 && y < 0)lon =  pi + atan(y / x);
   if (x < 0 && y == 0) lon =  pi;
-  //lon *= deg;
+  lon *= deg;
   lon = calc_modulo_360 (lon);
   Serial.println("LON:" + String(lon, DEC));
 
@@ -200,13 +202,14 @@ void calc_vector(float x, float y, float z, String mode) { // x = beta / y = lam
     if (z == 0)
       lat =  0;
   }
-  //lat *= deg;
+  lat *= deg;
   lat = calc_modulo_360 (lat);
   Serial.println("LAT:" + String(lat, DEC));
   //getDistance:
 
   float dist = sqrt(x * x + y * y + z * z);
   Serial.println("DIS:" + String(dist, DEC));
+  //orbital coordinates :LO :+271:31:00  LAT:+  0:00:00  RAD: 0.72
 }
 //------------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------------
