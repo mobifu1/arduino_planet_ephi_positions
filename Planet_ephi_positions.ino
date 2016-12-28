@@ -47,6 +47,8 @@ void setup() {
   Serial.println("JD:" + String(jd));
   get_object_position (1, jd);
 
+
+
 }
 //------------------------------------------------------------------------------------------------------------------
 void loop() {
@@ -76,7 +78,7 @@ void get_object_position (int object_number, float jd) {
 
   Serial.println("Object:" + object_name[object_number]);
 
-  float T = (jd - 2451545) / 36525.0;
+  float T = (jd - 2451545) / 36525;
   Serial.println("T:" + String(T, DEC));
 
   float semiMajorAxis = object_data[object_number][0] + (T * object_data[object_number][1]); // offset + T * delta
@@ -90,38 +92,46 @@ void get_object_position (int object_number, float jd) {
 
   Serial.println("semiMajorAxis:" + String(semiMajorAxis, DEC));
   Serial.println("eccentricity:" + String(eccentricity, DEC));
-  inclination = calc_modulo_360 (inclination);
+
+  inclination = calc_format_angel_deg (inclination);
   Serial.println("inclination:" + String(inclination, DEC));
-  meanLongitude = calc_modulo_360 (meanLongitude);
+
+  meanLongitude = calc_format_angel_deg (meanLongitude);
   Serial.println("meanLongitude:" + String(meanLongitude, DEC));
-  longitudePerihelion = calc_modulo_360 (longitudePerihelion);
+
+  longitudePerihelion = calc_format_angel_deg (longitudePerihelion);
   Serial.println("longitudePerihelion:" + String(longitudePerihelion, DEC));
-  longitudeAscendingNode = calc_modulo_360 (longitudeAscendingNode);
+
+  longitudeAscendingNode = calc_format_angel_deg (longitudeAscendingNode);
   Serial.println("longitudeAscendingNode:" + String(longitudeAscendingNode, DEC));
-  meanAnomaly = calc_modulo_360 (meanAnomaly);
+
+  meanAnomaly = calc_format_angel_deg (meanAnomaly);
   Serial.println("meanAnomaly:" + String(meanAnomaly, DEC));
-  argumentPerihelion = calc_modulo_360 (argumentPerihelion);
+
+  argumentPerihelion = calc_format_angel_deg (argumentPerihelion);
   Serial.println("argumentPerihelion:" + String(argumentPerihelion, DEC));
 
   float eccentricAnomaly = calc_eccentricAnomaly(meanAnomaly, eccentricity);
-  eccentricAnomaly = calc_modulo_360 (eccentricAnomaly);
+  eccentricAnomaly = calc_format_angel_deg (eccentricAnomaly);
   Serial.println("eccentricAnomaly:" + String(eccentricAnomaly, DEC));
 
   orbitalCoordinates (semiMajorAxis, eccentricity, eccentricAnomaly);
 }
 //------------------------------------------------------------------------------------------------------------------
-float calc_modulo_360 (float value) {
+float calc_format_angel_deg (float deg) {  //0-360 degrees
 
-  if (value >= 360 || value < 0) {
-    if (value < 0) {
-      value += 360000;
+  if (deg >= 360 || deg < 0) {
+    if (deg < 0) {
+      while (deg < 0) {
+        deg += 360;
+      }
     }
-    long x = (long)value;
-    float comma = value - x;
-    long y = x % 360;
+    long x = (long)deg;
+    float comma = deg - x;
+    long y = x % 360; //modulo 360
     return comma += y;
   }
-  return value;
+  return deg;
 }
 //------------------------------------------------------------------------------------------------------------------
 float calc_eccentricAnomaly (float meanAnomaly, float eccentricity) { //271.60 deg   /  0.00677672 rad
@@ -146,7 +156,7 @@ void orbitalCoordinates (float semiMajorAxis, float eccentricity, float eccentri
   eccentricAnomaly *= rad;
   float lambda = 2 * atan(sqrt((1 + eccentricity) / (1 - eccentricity)) * tan(eccentricAnomaly / 2));
   lambda *= deg;
-  lambda = calc_modulo_360 (lambda);
+  lambda = calc_format_angel_deg (lambda);
 
   float radius = semiMajorAxis * (1 - eccentricity * cos(eccentricAnomaly));
   Serial.println("lambda:" + String(lambda, DEC));
@@ -154,57 +164,60 @@ void orbitalCoordinates (float semiMajorAxis, float eccentricity, float eccentri
   //lambda  :   271.52
   //radius  : 0.7231735791216789
 
-  calc_vector(0, lambda, radius, "spherical"); // x=beta / y=lambda / z=r
+  calc_orbital_vector(0, lambda, radius, "spherical"); // x = beta / y = lambda / z = radius
 
 }
 //------------------------------------------------------------------------------------------------------------------
-void calc_vector(float x, float y, float z, String mode) { // x = beta / y = lambda / z = radius
+void calc_orbital_vector(float x, float y, float z, String mode) { // x = beta / y = lambda / z = radius
 
   x *= rad;
+  y *= rad;
 
   if (mode == "cartesian") {
   }
-  if (mode == "spherical") {//heliocentricOrbital
+  if (mode == "spherical") {// heliocentric Orbital
     // x = beta / y = lambda / z = radius
     x = z * cos(x) * cos(y);
     y = z * cos(x) * sin(y);
     z = z * sin(x);
   }
 
-  //getLongitude:
+  //get Longitude:
   float lon;
   if (x > 0 && y > 0) lon = atan(y / x);
-  if (x > 0 && y < 0) lon =  2 * pi + atan(y / x);
-  if (x > 0 && y == 0)  lon =  0;
+  if (x > 0 && y < 0) lon =  (2 * pi) + atan(y / x);
+  if (x > 0 && y == 0)  lon = 0;
 
-  if (x == 0 && y > 0)lon =  pi / 2;
-  if (x == 0 && y < 0) lon =  3 * pi / 2;
-  if (x == 0 && y == 0) lon =  0;
+  if (x == 0 && y > 0)lon = pi / 2;
+  if (x == 0 && y < 0) lon = 3 * pi / 2;
+  if (x == 0 && y == 0) lon = 0;
 
-  if (x < 0 && y > 0)lon =  pi + atan(y / x);
-  if (x < 0 && y < 0)lon =  pi + atan(y / x);
-  if (x < 0 && y == 0) lon =  pi;
+  if (x < 0 && y > 0)lon = pi + atan(y / x);
+  if (x < 0 && y < 0)lon = pi + atan(y / x);
+  if (x < 0 && y == 0) lon = pi;
+
   lon *= deg;
-  lon = calc_modulo_360 (lon);
+  lon = calc_format_angel_deg (lon);
   Serial.println("LON:" + String(lon, DEC));
+  format_orbital_angle(lon);
 
-  //getLatitude:
-  float rho = sqrt(x * x + y * y);
-  float lat;
+  //get Latitude:
+  float rho = sqrt((x * x) + (y * y));
+  float lat = 0;
   if (rho != 0) {
     lat = atan(z / rho);
   }
   else {
-    if (z < 0)
-      lat =  -pi / 2;
-    if (z > 0)
-      lat =  pi / 2;
-    if (z == 0)
-      lat =  0;
+    if (z < 0) lat =  -1 * pi / 2;
+    if (z > 0) lat =  pi / 2;
+    if (z == 0)lat =  0;
   }
+
   lat *= deg;
-  lat = calc_modulo_360 (lat);
+  lat = calc_format_angel_deg (lat);
   Serial.println("LAT:" + String(lat, DEC));
+  format_orbital_angle(lat);
+
   //getDistance:
 
   float dist = sqrt(x * x + y * y + z * z);
@@ -212,4 +225,30 @@ void calc_vector(float x, float y, float z, String mode) { // x = beta / y = lam
   //orbital coordinates :LO :+271:31:00  LAT:+  0:00:00  RAD: 0.72
 }
 //------------------------------------------------------------------------------------------------------------------
+void format_orbital_angle(float angle) {
+
+  int d = 0;
+  int m = 0;
+  int s = 0;
+  float rest = 0;
+
+  rest = calc_format_angel_deg (angle);
+
+  String sign = "";
+
+  if (rest >= 0) {
+    sign = "+";
+  }
+  else {
+    sign = "-";
+  }
+
+  rest = abs(rest);
+  d = (int)(rest);
+  rest = (rest - (float)d) * 60;
+  m = (int)(rest);
+  rest = (rest - (float)m) * 60;
+  s = (int)rest;
+  Serial.println(sign + String(d) + ":" + String(m) + ":" + String(s));
+}
 //------------------------------------------------------------------------------------------------------------------
