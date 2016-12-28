@@ -37,6 +37,10 @@ const float pi = 3.1415926535; //PI
 float jd = 0;                  //Juliane date
 float eclipticAngle0 = (23.43928) * rad;
 
+//global coordinates:
+float x_coord;
+float y_coord;
+float z_coord;
 
 //------------------------------------------------------------------------------------------------------------------
 void setup() {
@@ -114,8 +118,20 @@ void get_object_position (int object_number, float jd) {
   float eccentricAnomaly = calc_eccentricAnomaly(meanAnomaly, eccentricity);
   eccentricAnomaly = calc_format_angel_deg (eccentricAnomaly);
   Serial.println("eccentricAnomaly:" + String(eccentricAnomaly, DEC));
+  //---------------------------------
+  //to orbital Coordinates:
+  Serial.println("orbital Coordinates:");
+  calc_orbital_coordinates (semiMajorAxis, eccentricity, eccentricAnomaly);
+  //---------------------------------
+  //to heliocentric Ecliptic Position:
+  Serial.println("heliocentric Ecliptic Position:");
+  rot_z (argumentPerihelion);
+  rot_x (inclination);
+  rot_z (longitudeAscendingNode);
+  calc_vector(x_coord, y_coord, z_coord, "");
+  //heliocentric ecliptic coordinates :LO :+ 44:09:09  LAT:-  1:49:27  RAD: 0.72
+  //---------------------------------
 
-  orbitalCoordinates (semiMajorAxis, eccentricity, eccentricAnomaly);
 }
 //------------------------------------------------------------------------------------------------------------------
 float calc_format_angel_deg (float deg) {  //0-360 degrees
@@ -151,7 +167,7 @@ float calc_eccentricAnomaly (float meanAnomaly, float eccentricity) { //271.60 d
   return eccentricAnomaly; //174.3823298500084 ????
 }
 //------------------------------------------------------------------------------------------------------------------
-void orbitalCoordinates (float semiMajorAxis, float eccentricity, float eccentricAnomaly) {
+void calc_orbital_coordinates (float semiMajorAxis, float eccentricity, float eccentricAnomaly) {
 
   eccentricAnomaly *= rad;
   float lambda = 2 * atan(sqrt((1 + eccentricity) / (1 - eccentricity)) * tan(eccentricAnomaly / 2));
@@ -164,23 +180,28 @@ void orbitalCoordinates (float semiMajorAxis, float eccentricity, float eccentri
   //lambda  :   271.52
   //radius  : 0.7231735791216789
 
-  calc_orbital_vector(0, lambda, radius, "spherical"); // x = beta / y = lambda / z = radius
+  calc_vector(0, lambda, radius, "spherical"); // x = beta / y = lambda / z = radius
 
 }
 //------------------------------------------------------------------------------------------------------------------
-void calc_orbital_vector(float x, float y, float z, String mode) { // x = beta / y = lambda / z = radius
-
-  x *= rad;
-  y *= rad;
+void calc_vector(float x, float y, float z, String mode) { // x = beta / y = lambda / z = radius
 
   if (mode == "cartesian") {
   }
   if (mode == "spherical") {// heliocentric Orbital
     // x = beta / y = lambda / z = radius
+    x *= rad;
+    y *= rad;
+
     x = z * cos(x) * cos(y);
     y = z * cos(x) * sin(y);
     z = z * sin(x);
+
+    x_coord = x;
+    y_coord = y;
+    z_coord = z;
   }
+
 
   //get Longitude:
   float lon;
@@ -219,7 +240,6 @@ void calc_orbital_vector(float x, float y, float z, String mode) { // x = beta /
   format_orbital_angle(lat);
 
   //getDistance:
-
   float dist = sqrt(x * x + y * y + z * z);
   Serial.println("DIS:" + String(dist, DEC));
   //orbital coordinates :LO :+271:31:00  LAT:+  0:00:00  RAD: 0.72
@@ -251,4 +271,26 @@ void format_orbital_angle(float angle) {
   s = (int)rest;
   Serial.println(sign + String(d) + ":" + String(m) + ":" + String(s));
 }
+//--------------------------------------------------------------------------------------------------------------------
+void rot_x(float alpha) {
+
+  alpha *= rad;
+  y_coord = cos(alpha) * y_coord - sin(alpha) * z_coord;
+  z_coord = sin(alpha) * y_coord + cos(alpha) * z_coord;
+}
+//------------------------------------------------------------------------------------------------------------------
+void rot_y (float alpha) {
+
+  alpha *= rad;
+  x_coord = cos(alpha) * x_coord + sin(alpha) * z_coord;
+  z_coord = sin(alpha) * x_coord + cos(alpha) * z_coord;
+}
+//------------------------------------------------------------------------------------------------------------------
+void rot_z (float alpha) {
+
+  alpha *= rad;
+  x_coord = cos(alpha) * x_coord - sin(alpha) * y_coord;
+  y_coord = sin(alpha) * x_coord + cos(alpha) * y_coord;
+}
+//------------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------------
