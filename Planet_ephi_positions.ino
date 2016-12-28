@@ -186,8 +186,6 @@ void calc_orbital_coordinates (float semiMajorAxis, float eccentricity, float ec
 //------------------------------------------------------------------------------------------------------------------
 void calc_vector(float x, float y, float z, String mode) { // x = beta / y = lambda / z = radius
 
-  if (mode == "cartesian") {
-  }
   if (mode == "spherical") {// heliocentric Orbital
     // x = beta / y = lambda / z = radius
     x *= rad;
@@ -201,7 +199,6 @@ void calc_vector(float x, float y, float z, String mode) { // x = beta / y = lam
     y_coord = y;
     z_coord = z;
   }
-
 
   //get Longitude:
   float lon;
@@ -220,7 +217,7 @@ void calc_vector(float x, float y, float z, String mode) { // x = beta / y = lam
   lon *= deg;
   lon = calc_format_angel_deg (lon);
   Serial.println("LON:" + String(lon, DEC));
-  format_orbital_angle(lon);
+  format_angle("degrees", lon);
 
   //get Latitude:
   float rho = sqrt((x * x) + (y * y));
@@ -237,7 +234,7 @@ void calc_vector(float x, float y, float z, String mode) { // x = beta / y = lam
   lat *= deg;
   lat = calc_format_angel_deg (lat);
   Serial.println("LAT:" + String(lat, DEC));
-  format_orbital_angle(lat);
+  format_angle("degrees-latitude", lat);
 
   //getDistance:
   float dist = sqrt(x * x + y * y + z * z);
@@ -245,31 +242,57 @@ void calc_vector(float x, float y, float z, String mode) { // x = beta / y = lam
   //orbital coordinates :LO :+271:31:00  LAT:+  0:00:00  RAD: 0.72
 }
 //------------------------------------------------------------------------------------------------------------------
-void format_orbital_angle(float angle) {
+void format_angle(String format, float angle) {
 
   int d = 0;
   int m = 0;
   int s = 0;
+  int h = 0;
   float rest = 0;
-
-  rest = calc_format_angel_deg (angle);
-
   String sign = "";
 
-  if (rest >= 0) {
-    sign = "+";
-  }
-  else {
-    sign = "-";
+  if (format == "degrees" || format == "degrees-latitude") {
+
+    rest = calc_format_angel_deg (angle);
+
+    if (format == "degrees-latitude" && rest > 90) {
+      rest -= 360;
+    }
+    if (rest >= 0) {
+      sign = "+";
+    }
+    else {
+      sign = "-";
+    }
+
+    rest = abs(rest);
+    d = (int)(rest);
+    rest = (rest - (float)d) * 60;
+    m = (int)(rest);
+    rest = (rest - (float)m) * 60;
+    s = (int)rest;
+    Serial.println(sign + String(d) + ":" + String(m) + ":" + String(s));
   }
 
-  rest = abs(rest);
-  d = (int)(rest);
-  rest = (rest - (float)d) * 60;
-  m = (int)(rest);
-  rest = (rest - (float)m) * 60;
-  s = (int)rest;
-  Serial.println(sign + String(d) + ":" + String(m) + ":" + String(s));
+  if (format == "degrees-simple" || format == "degrees-simple-latitude") {
+
+    float a = calc_format_angel_deg (angle);
+    if (format == "degrees-simple-latitude" && a > 90) {
+      a -= 360;
+    }
+    Serial.println("a:" + String(a));
+  }
+
+  if (format == "hours") {
+    rest = 0;
+    rest = calc_format_angel_deg (angle) * 24 / 360;
+    h = (int)(rest);
+    rest = (rest - h) * 60;
+    m = (int)(rest);
+    rest = (rest - m) * 60;
+    s = (int)(rest);
+    Serial.println(sign + String(h) + ":" + String(m) + ":" + String(s));
+  }
 }
 //--------------------------------------------------------------------------------------------------------------------
 void rot_x(float alpha) {
@@ -292,5 +315,4 @@ void rot_z (float alpha) {
   x_coord = cos(alpha) * x_coord - sin(alpha) * y_coord;
   y_coord = sin(alpha) * x_coord + cos(alpha) * y_coord;
 }
-//------------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------------
