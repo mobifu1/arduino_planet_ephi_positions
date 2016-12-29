@@ -48,8 +48,9 @@ void setup() {
   Serial.begin(9600);
   delay(500);
   jd = get_julian_date (29, 12, 2016, 16, 54, 0);
+  jd = 2457752.279166667;
   Serial.println("JD:" + String(jd, DEC));
-  //get_object_position (1, jd);
+  get_object_position (1, jd);
   get_object_position (2, jd);
 
 }
@@ -134,7 +135,7 @@ void get_object_position (int object_number, float jd) {
   rot_z (longitudeAscendingNode);
   //print_xyz();
   calc_vector(x_coord, y_coord, z_coord, "");
-  //heliocentric ecliptic coordinates :LO :+ 44:09:09  LAT:-  1:49:27  RAD: 0.72
+  //heliocentric ecliptic coordinates :LO :+ 46:07:16  LAT:-  1:43:29  RAD: 0.72
   //---------------------------------
 
 }
@@ -200,8 +201,7 @@ void calc_orbital_coordinates (float semiMajorAxis, float eccentricity, float ec
 
 }
 //------------------------------------------------------------------------------------------------------------------
-void calc_vector(float x, float y, float z, String mode) { // x = beta / y = lambda / z = radius
-
+void calc_vector(float x, float y, float z, String mode) { // x = beta / y = lambda / z = radius  >>>>  lambda  :   274.47   ,  radius  : 0.7229213932922508
 
   if (mode == "spherical") {// heliocentric Orbital
     // x = beta / y = lambda / z = radius
@@ -238,10 +238,10 @@ void calc_vector(float x, float y, float z, String mode) { // x = beta / y = lam
 
 
   //get Latitude:
-  float rho = sqrt((x * x) + (y * y));//0 , 274
+  float rho = sqrt((x * x) + (y * y));// x=0.0563  y=-0.719 z=0.0407
   float lat = 0;
   if (rho != 0) {
-    lat = atan(z / rho);
+    lat = atan(z / rho); //0.0407 /0.7217 = 0.056394624 atan= 0.0563419090
   }
   else {
     if (z < 0) lat = -1 * pi / 2;
@@ -258,7 +258,7 @@ void calc_vector(float x, float y, float z, String mode) { // x = beta / y = lam
   //getDistance:
   float dist = sqrt(x * x + y * y + z * z);
   Serial.println("DIS:" + String(dist, DEC));
-  //orbital coordinates :LO :+271:31:00  LAT:+  0:00:00  RAD: 0.72
+  // orbital coordinates :LO :+274:28:27  LAT:+  0:00:00  RAD: 0.72
 }
 //------------------------------------------------------------------------------------------------------------------
 void format_angle(String format, float angle) {
@@ -275,7 +275,7 @@ void format_angle(String format, float angle) {
     rest = calc_format_angel_deg (angle);
 
     if (format == "degrees-latitude" && rest > 90) {
-      rest -= 360;
+            rest -= 360;
     }
     if (rest >= 0) {
       sign = "+";
