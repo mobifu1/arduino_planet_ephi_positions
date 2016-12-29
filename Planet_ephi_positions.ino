@@ -22,7 +22,7 @@ String star_name[1] = {"Sun"};
 const float object_data[8][12] = {// a, aΔ, e, eΔ, i, iΔ,  L, LΔ, ω, ωΔ, Ω, ΩΔ  >>> L2000
   {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // Mercury
   {0.72333566, 0.00000390, 0.00677672, -0.00004107, 3.39467605, -0.00078890, 181.97909950, 58517.81538729, 131.60246718, 0.00268329, 76.67984255, -0.27769418}, // Venus
-  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // Earth
+  {1.00000261, 0.00000562, 0.01671123, -0.00004392, -0.00001531, -0.01294668, 100.46457166, 35999.37244981, 102.93768193, 0.32327364, 0, 0},                    // Earth
   {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // Mars
   {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // Jupiter
   {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // Saturn
@@ -46,12 +46,11 @@ float z_coord;
 void setup() {
 
   Serial.begin(9600);
-
-  jd = get_julian_date (27, 12, 2016, 14, 00, 00);
-  Serial.println("JD:" + String(jd));
-  get_object_position (1, jd);
-
-
+  delay(500);
+  jd = get_julian_date (29, 12, 2016, 16, 54, 0);
+  Serial.println("JD:" + String(jd, DEC));
+  //get_object_position (1, jd);
+  get_object_position (2, jd);
 
 }
 //------------------------------------------------------------------------------------------------------------------
@@ -70,16 +69,18 @@ float get_julian_date (float day_, float month_, float year_, float hour_, float
     month_ += 12;
   }
 
-  hour_ = (hour_ / 24) + (minute_ / 1440) + (seconds_ / 86400);
-  long B = 2 - (int)(year_ / 100)  + (int)(year_ / 100 / 4);
-  float jd = (long)(365.25 * (year_ + 4716)) + (long)(30.6001 * (month_ + 1)) + day_ + hour_ + (float)B - 1524.5;
+  float H = (hour_ / 24) + (minute_ / 1440) + (seconds_ / 86400);
+  float B = 2 - (long)(year_ / 100)  + (long)(year_ / 100 / 4);
+  float jd = (long)(365.25 * (year_ + 4716)) + (long)(30.6001 * (month_ + 1)) + day_ + B + H - 1524.5;
   return jd;
+
 }
 // =========================================================================
 // object position
 // =========================================================================
 void get_object_position (int object_number, float jd) {
 
+  Serial.println("----------------------------------------------------");
   Serial.println("Object:" + object_name[object_number]);
 
   float T = (jd - 2451545) / 36525;
@@ -114,7 +115,7 @@ void get_object_position (int object_number, float jd) {
 
   argumentPerihelion = calc_format_angel_deg (argumentPerihelion);
   Serial.println("argumentPerihelion:" + String(argumentPerihelion, DEC));
-
+  //----
   float eccentricAnomaly = calc_eccentricAnomaly(meanAnomaly, eccentricity);
   eccentricAnomaly = calc_format_angel_deg (eccentricAnomaly);
   Serial.println("eccentricAnomaly:" + String(eccentricAnomaly, DEC));
@@ -158,13 +159,24 @@ float calc_eccentricAnomaly (float meanAnomaly, float eccentricity) { //271.60 d
 
   meanAnomaly *= rad;
 
+  int counter = 0;
   float eccentricAnomaly = meanAnomaly + (eccentricity * sin(meanAnomaly));
+  //Serial.println(String(eccentricAnomaly, DEC));
   float deltaEccentricAnomaly = 1;
 
-  while (abs(deltaEccentricAnomaly) > 0.0000001) {
-    deltaEccentricAnomaly = (meanAnomaly - eccentricAnomaly + eccentricity * sin(eccentricAnomaly)) / (1 - eccentricity * cos(eccentricAnomaly));
+  while (fabs(deltaEccentricAnomaly) > 0.000001) { // 0.0000001
+
+    deltaEccentricAnomaly = (meanAnomaly - eccentricAnomaly + (eccentricity * sin(eccentricAnomaly))) / (1 - eccentricity * cos(eccentricAnomaly));
     //Serial.println(String(deltaEccentricAnomaly, DEC));
     eccentricAnomaly += deltaEccentricAnomaly;
+    //Serial.println(String(eccentricAnomaly, DEC));
+
+    counter++;
+    if (counter > 20) {
+      Serial.println("Error:Keplergleichung");
+      eccentricAnomaly = 0;
+      break;
+    }
   }
 
   eccentricAnomaly *= deg;
@@ -189,6 +201,7 @@ void calc_orbital_coordinates (float semiMajorAxis, float eccentricity, float ec
 }
 //------------------------------------------------------------------------------------------------------------------
 void calc_vector(float x, float y, float z, String mode) { // x = beta / y = lambda / z = radius
+
 
   if (mode == "spherical") {// heliocentric Orbital
     // x = beta / y = lambda / z = radius
@@ -223,22 +236,24 @@ void calc_vector(float x, float y, float z, String mode) { // x = beta / y = lam
   Serial.println("LON:" + String(lon, DEC));
   format_angle("degrees", lon);
 
+
   //get Latitude:
-  float rho = sqrt((x * x) + (y * y));
+  float rho = sqrt((x * x) + (y * y));//0 , 274
   float lat = 0;
   if (rho != 0) {
     lat = atan(z / rho);
   }
   else {
-    if (z < 0) lat =  -1 * pi / 2;
-    if (z > 0) lat =  pi / 2;
-    if (z == 0)lat =  0;
+    if (z < 0) lat = -1 * pi / 2;
+    if (z > 0) lat = pi / 2;
+    if (z == 0)lat = 0;
   }
 
   lat *= deg;
   lat = calc_format_angel_deg (lat);
   Serial.println("LAT:" + String(lat, DEC));
   format_angle("degrees-latitude", lat);
+
 
   //getDistance:
   float dist = sqrt(x * x + y * y + z * z);
@@ -269,7 +284,7 @@ void format_angle(String format, float angle) {
       sign = "-";
     }
 
-    rest = abs(rest);
+    rest = fabs(rest);
     d = (int)(rest);
     rest = (rest - (float)d) * 60;
     m = (int)(rest);
