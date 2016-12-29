@@ -125,9 +125,13 @@ void get_object_position (int object_number, float jd) {
   //---------------------------------
   //to heliocentric Ecliptic Position:
   Serial.println("heliocentric Ecliptic Position:");
+  //print_xyz();
   rot_z (argumentPerihelion);
+  //print_xyz();
   rot_x (inclination);
+  //print_xyz();
   rot_z (longitudeAscendingNode);
+  //print_xyz();
   calc_vector(x_coord, y_coord, z_coord, "");
   //heliocentric ecliptic coordinates :LO :+ 44:09:09  LAT:-  1:49:27  RAD: 0.72
   //---------------------------------
@@ -298,21 +302,31 @@ void format_angle(String format, float angle) {
 void rot_x(float alpha) {
 
   alpha *= rad;
-  y_coord = cos(alpha) * y_coord - sin(alpha) * z_coord;
-  z_coord = sin(alpha) * y_coord + cos(alpha) * z_coord;
+  float y = cos(alpha) * y_coord - sin(alpha) * z_coord;
+  float z = sin(alpha) * y_coord + cos(alpha) * z_coord;
+  y_coord = y;
+  z_coord = z;
 }
 //------------------------------------------------------------------------------------------------------------------
 void rot_y (float alpha) {
 
   alpha *= rad;
-  x_coord = cos(alpha) * x_coord + sin(alpha) * z_coord;
-  z_coord = sin(alpha) * x_coord + cos(alpha) * z_coord;
+  float x = cos(alpha) * x_coord + sin(alpha) * z_coord;
+  float z = sin(alpha) * x_coord + cos(alpha) * z_coord;
+  x_coord = x;
+  z_coord = z;
 }
 //------------------------------------------------------------------------------------------------------------------
 void rot_z (float alpha) {
 
   alpha *= rad;
-  x_coord = cos(alpha) * x_coord - sin(alpha) * y_coord;
-  y_coord = sin(alpha) * x_coord + cos(alpha) * y_coord;
+  float x = cos(alpha) * x_coord - sin(alpha) * y_coord;
+  float y = sin(alpha) * x_coord + cos(alpha) * y_coord;
+  x_coord = x;
+  y_coord = y;
 }
 //------------------------------------------------------------------------------------------------------------------
+void print_xyz() {
+
+  Serial.println("xyz:" + String(x_coord, DEC) + "," + String(y_coord, DEC) + "," + String(z_coord, DEC));
+}
