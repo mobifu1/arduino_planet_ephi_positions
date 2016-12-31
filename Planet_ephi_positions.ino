@@ -48,7 +48,7 @@ void setup() {
   Serial.begin(9600);
   delay(500);
   jd = get_julian_date (29, 12, 2016, 16, 54, 0);
-  jd = 2457752.279166667;
+  jd = 2457752.8875;
   Serial.println("JD:" + String(jd, DEC));
   get_object_position (1, jd);
   get_object_position (2, jd);
@@ -174,14 +174,15 @@ float calc_eccentricAnomaly (float meanAnomaly, float eccentricity) { //271.60 d
 
     counter++;
     if (counter > 20) {
-      Serial.println("Error:Keplergleichung");
+      Serial.println("Error:Keplergleichung!!!!!");
       eccentricAnomaly = 0;
       break;
     }
   }
 
   eccentricAnomaly *= deg;
-  return eccentricAnomaly; //174.3823298500084 ????
+  //eccentricAnomaly = 174.46025007692424;//test
+  return eccentricAnomaly;
 }
 //------------------------------------------------------------------------------------------------------------------
 void calc_orbital_coordinates (float semiMajorAxis, float eccentricity, float eccentricAnomaly) {
@@ -191,11 +192,11 @@ void calc_orbital_coordinates (float semiMajorAxis, float eccentricity, float ec
   lambda *= deg;
   lambda = calc_format_angel_deg (lambda);
 
-  float radius = semiMajorAxis * (1 - eccentricity * cos(eccentricAnomaly));
+  float radius = semiMajorAxis * (1 - (eccentricity * cos(eccentricAnomaly)));
   Serial.println("lambda:" + String(lambda, DEC));
   Serial.println("radius:" + String(radius, DEC));
-  //lambda  :   271.52
-  //radius  : 0.7231735791216789
+  //lambda  : 274.42
+  //radius  : 0.722
 
   calc_vector(0, lambda, radius, "spherical"); // x = beta / y = lambda / z = radius
 
@@ -203,8 +204,12 @@ void calc_orbital_coordinates (float semiMajorAxis, float eccentricity, float ec
 //------------------------------------------------------------------------------------------------------------------
 void calc_vector(float x, float y, float z, String mode) { // x = beta / y = lambda / z = radius  >>>>  lambda  :   274.47   ,  radius  : 0.7229213932922508
 
-  if (mode == "spherical") {// heliocentric Orbital
-    // x = beta / y = lambda / z = radius
+  Serial.println("beta  :" + String(x, DEC));
+  Serial.println("lambda:" + String(y, DEC));
+  Serial.println("radius:" + String(z, DEC));
+
+  if (mode == "spherical") {// heliocentric coordinates
+
     x *= rad;
     y *= rad;
 
@@ -215,6 +220,10 @@ void calc_vector(float x, float y, float z, String mode) { // x = beta / y = lam
     x_coord = x;
     y_coord = y;
     z_coord = z;
+
+    Serial.println("x_coord:" + String(x_coord, DEC));
+    Serial.println("y_coord:" + String(y_coord, DEC));
+    Serial.println("z_coord:" + String(z_coord, DEC));
   }
 
   //get Longitude:
@@ -232,9 +241,9 @@ void calc_vector(float x, float y, float z, String mode) { // x = beta / y = lam
   if (x < 0 && y == 0) lon = pi;
 
   lon *= deg;
-  lon = calc_format_angel_deg (lon);
+  //lon = calc_format_angel_deg (lon);
   Serial.println("LON:" + String(lon, DEC));
-  format_angle("degrees", lon);
+  //format_angle("degrees",
 
 
   //get Latitude:
@@ -250,9 +259,9 @@ void calc_vector(float x, float y, float z, String mode) { // x = beta / y = lam
   }
 
   lat *= deg;
-  lat = calc_format_angel_deg (lat);
+  //lat = calc_format_angel_deg (lat);
   Serial.println("LAT:" + String(lat, DEC));
-  format_angle("degrees-latitude", lat);
+  //format_angle("degrees-latitude", lat);
 
 
   //getDistance:
@@ -275,7 +284,7 @@ void format_angle(String format, float angle) {
     rest = calc_format_angel_deg (angle);
 
     if (format == "degrees-latitude" && rest > 90) {
-            rest -= 360;
+      rest -= 360;
     }
     if (rest >= 0) {
       sign = "+";
