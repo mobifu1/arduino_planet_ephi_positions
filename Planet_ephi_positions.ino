@@ -48,11 +48,11 @@ void setup() {
 
   Serial.begin(9600);
   delay(500);
-  jd = get_julian_date (29, 12, 2016, 16, 54, 0);
-  jd = 2457752.8875;
+  jd = get_julian_date (03, 01, 2017, 18, 0, 0);
+  //jd = 2457752.8875;
   Serial.println("JD:" + String(jd, DEC));
   get_object_position (1, jd);
-  get_object_position (2, jd);
+  //get_object_position (2, jd);
 
 }
 //------------------------------------------------------------------------------------------------------------------
@@ -189,25 +189,21 @@ float calc_eccentricAnomaly (float meanAnomaly, float eccentricity) { //271.60 d
 void calc_orbital_coordinates (float semiMajorAxis, float eccentricity, float eccentricAnomaly) {
 
   eccentricAnomaly *= rad;
-  float lambda = 2 * atan(sqrt((1 + eccentricity) / (1 - eccentricity)) * tan(eccentricAnomaly / 2));
-  lambda *= deg;
-  lambda = calc_format_angel_deg (lambda);
+  float true_Anomaly = 2 * atan(sqrt((1 + eccentricity) / (1 - eccentricity)) * tan(eccentricAnomaly / 2));
+  true_Anomaly *= deg;
+  true_Anomaly = calc_format_angel_deg (true_Anomaly);
 
   float radius = semiMajorAxis * (1 - (eccentricity * cos(eccentricAnomaly)));
-  Serial.println("lambda:" + String(lambda, DEC));
+  Serial.println("true_Anomaly:" + String(true_Anomaly, DEC));
   Serial.println("radius:" + String(radius, DEC));
-  //lambda  : 274.42
-  //radius  : 0.722
+  //true_Anomaly  : 278.841
+  //radius        : 0.7225
 
-  calc_vector(0, lambda, radius, "spherical"); // x = beta / y = lambda / z = radius
+  calc_vector(0, true_Anomaly, radius, "spherical"); // x = beta / y = true_Anomaly / z = radius
 
 }
 //------------------------------------------------------------------------------------------------------------------
-void calc_vector(float x, float y, float z, String mode) { // x = beta / y = lambda / z = radius  >>>>  lambda  :   274.47   ,  radius  : 0.7229213932922508
-
-  Serial.println("beta  :" + String(x, DEC));
-  Serial.println("lambda:" + String(y, DEC));
-  Serial.println("radius:" + String(z, DEC));
+void calc_vector(float x, float y, float z, String mode) { // x = beta / y = true_Anomaly / z = radius  >>>>  true_Anomaly  :   278.841   ,  radius  : 0.7225
 
   if (mode == "spherical") {// heliocentric coordinates
 
@@ -233,25 +229,25 @@ void calc_vector(float x, float y, float z, String mode) { // x = beta / y = lam
   if (x > 0 && y < 0) lon =  (2 * pi) + atan(y / x);
   if (x > 0 && y == 0)  lon = 0;
 
-  if (x == 0 && y > 0)lon = pi / 2;
+  if (x == 0 && y > 0) lon = pi / 2;
   if (x == 0 && y < 0) lon = 3 * pi / 2;
   if (x == 0 && y == 0) lon = 0;
 
-  if (x < 0 && y > 0)lon = pi + atan(y / x);
-  if (x < 0 && y < 0)lon = pi + atan(y / x);
+  if (x < 0 && y > 0) lon = pi + atan(y / x);
+  if (x < 0 && y < 0) lon = pi + atan(y / x);
   if (x < 0 && y == 0) lon = pi;
 
   lon *= deg;
   //lon = calc_format_angel_deg (lon);
-  Serial.println("LON:" + String(lon, DEC));
-  //format_angle("degrees",
+  Serial.println("LON:" + String(lon, DEC));//282 deg
+  //format_angle("degrees",lon);
 
 
   //get Latitude:
-  float rho = sqrt((x * x) + (y * y));// x=0.0563  y=-0.719 z=0.0407
+  float rho = sqrt((x * x) + (y * y));// x:0.1557725700    y:-0.6967110600    z:0.1120520800
   float lat = 0;
-  if (rho != 0) {
-    lat = atan(z / rho); //0.0407 /0.7217 = 0.056394624 atan= 0.0563419090
+  if (rho != 0) {// rho = 0.7139
+    lat = atan(z / rho);// lat = 0.1556
   }
   else {
     if (z < 0) lat = -1 * pi / 2;
@@ -259,7 +255,7 @@ void calc_vector(float x, float y, float z, String mode) { // x = beta / y = lam
     if (z == 0)lat = 0;
   }
 
-  lat *= deg;
+  lat *= deg;// 8.9 deg ???
   //lat = calc_format_angel_deg (lat);
   Serial.println("LAT:" + String(lat, DEC));
   //format_angle("degrees-latitude", lat);
@@ -268,7 +264,7 @@ void calc_vector(float x, float y, float z, String mode) { // x = beta / y = lam
   //getDistance:
   float dist = sqrt(x * x + y * y + z * z);
   Serial.println("DIS:" + String(dist, DEC));
-  // orbital coordinates :LO :+274:28:27  LAT:+  0:00:00  RAD: 0.72
+  // orbital coordinates :LO :+282:32:27  LAT:+  0:00:00  RAD: 0.72
 }
 //------------------------------------------------------------------------------------------------------------------
 void format_angle(String format, float angle) {
