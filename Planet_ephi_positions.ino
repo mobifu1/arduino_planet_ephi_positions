@@ -21,15 +21,16 @@ String star_name[1] = {"Sun"};
 
 // http://ssd.jpl.nasa.gov/txt/aprx_pos_planets.pdf
 const float object_data[8][12] = {// a, aΔ, e, eΔ, i, iΔ,  L, LΔ, ω, ωΔ, Ω, ΩΔ  >>> L2000
-  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // Mercury
+  {0.38709927, 0.00000037, 0.20563593, 0.00001906, 7.00497902, -0.00594749, 252.25032350, 149472.67411175, 77.45779628, 0.16047689, 48.33076593, -0.12534081}, // Mercury
   {0.72333566, 0.00000390, 0.00677672, -0.00004107, 3.39467605, -0.00078890, 181.97909950, 58517.81538729, 131.60246718, 0.00268329, 76.67984255, -0.27769418}, // Venus
   {1.00000261, 0.00000562, 0.01671123, -0.00004392, -0.00001531, -0.01294668, 100.46457166, 35999.37244981, 102.93768193, 0.32327364, 0, 0},                    // Earth
-  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // Mars
-  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // Jupiter
-  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // Saturn
-  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // Uranus
-  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // Neptun
+  {1.52371034, 0.00001847, 0.09339410, 0.00007882, 1.84969142, -0.00813131, -4.55343205, 19140.30268499, -23.94362959, 0.44441088, 49.55953891, -0.29257343},   // Mars
+  {5.20288700, -0.00011607, 0.04838624, -0.00013253, 1.30439695, -0.00183714, 34.39644051, 3034.74612775, 14.72847983, 0.21252668, 100.47390909, 0.20469106},   // Jupiter
+  {9.53667594, -0.00125060, 0.05386179, -0.00050991, 2.48599187, 0.00193609, 49.95424423, 1222.49362201, 92.59887831, -0.41897216, 113.66242448, -0.28867794},  // Saturn
+  {19.1891646, -0.00196176, 0.04725744, -0.00004397, 0.77263783, -0.00242939, 313.23810451, 428.48202785, 170.95427630, 0.40805281, 074.01692503, 0.04240589}, // Uranus
+  { 30.06992276, 0.00026291, 0.00859048, 0.00005105, 1.77004347, 0.00035372, -55.12002969, 218.45945325, 44.96476227, -0.32241464, 131.78422574, -0.00508664}, // Neptun
 };
+
 
 // global factors:
 const float rad = 0.017453293; // deg to rad
@@ -48,7 +49,7 @@ void setup() {
 
   Serial.begin(9600);
   delay(500);
-  jd = get_julian_date (03, 01, 2017, 18, 0, 0);
+  jd = get_julian_date (04, 01, 2017, 18, 0, 0);
   //jd = 2457752.8875;
   Serial.println("JD:" + String(jd, DEC));
   get_object_position (1, jd);
@@ -199,13 +200,14 @@ void calc_orbital_coordinates (float semiMajorAxis, float eccentricity, float ec
   //true_Anomaly  : 278.841
   //radius        : 0.7225
 
-  calc_vector(0, true_Anomaly, radius, "spherical"); // x = beta / y = true_Anomaly / z = radius
+  calc_vector(0, true_Anomaly, radius, "to_rectangular"); // x = beta / y = true_Anomaly / z = radius
 
 }
 //------------------------------------------------------------------------------------------------------------------
 void calc_vector(float x, float y, float z, String mode) { // x = beta / y = true_Anomaly / z = radius  >>>>  true_Anomaly  :   278.841   ,  radius  : 0.7225
 
-  if (mode == "spherical") {// heliocentric coordinates
+  // convert to rectangular coordinates:
+  if (mode == "to_rectangular") {
 
     x *= rad;
     y *= rad;
@@ -217,48 +219,28 @@ void calc_vector(float x, float y, float z, String mode) { // x = beta / y = tru
     x_coord = x;
     y_coord = y;
     z_coord = z;
-
-    Serial.println("x_coord:" + String(x_coord, DEC));
-    Serial.println("y_coord:" + String(y_coord, DEC));
-    Serial.println("z_coord:" + String(z_coord, DEC));
   }
 
+  Serial.println("x_coord:" + String(x, DEC));
+  Serial.println("y_coord:" + String(y, DEC));
+  Serial.println("z_coord:" + String(z, DEC));
+
+
+  // convert to spherical coordinates:
   //get Longitude:
-  float lon;
-  if (x > 0 && y > 0) lon = atan(y / x);
-  if (x > 0 && y < 0) lon =  (2 * pi) + atan(y / x);
-  if (x > 0 && y == 0)  lon = 0;
-
-  if (x == 0 && y > 0) lon = pi / 2;
-  if (x == 0 && y < 0) lon = 3 * pi / 2;
-  if (x == 0 && y == 0) lon = 0;
-
-  if (x < 0 && y > 0) lon = pi + atan(y / x);
-  if (x < 0 && y < 0) lon = pi + atan(y / x);
-  if (x < 0 && y == 0) lon = pi;
-
+  float lon = atan2(y, x);
   lon *= deg;
-  //lon = calc_format_angel_deg (lon);
+  lon = calc_format_angel_deg (lon);
   Serial.println("LON:" + String(lon, DEC));//282 deg
-  //format_angle("degrees",lon);
+  format_angle("degrees", lon);
 
 
   //get Latitude:
-  float rho = sqrt((x * x) + (y * y));// x:0.1557725700    y:-0.6967110600    z:0.1120520800
-  float lat = 0;
-  if (rho != 0) {// rho = 0.7139
-    lat = atan(z / rho);// lat = 0.1556
-  }
-  else {
-    if (z < 0) lat = -1 * pi / 2;
-    if (z > 0) lat = pi / 2;
-    if (z == 0)lat = 0;
-  }
-
+  float lat = atan2(z, sqrt(x * x + y * y));//0.1328591599494871
   lat *= deg;// 8.9 deg ???
-  //lat = calc_format_angel_deg (lat);
+  lat = calc_format_angel_deg (lat);
   Serial.println("LAT:" + String(lat, DEC));
-  //format_angle("degrees-latitude", lat);
+  format_angle("degrees-latitude", lat);
 
 
   //getDistance:
