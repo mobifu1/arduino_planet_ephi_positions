@@ -3,6 +3,7 @@
 // Calculation the Positions of Planets by elliptic Orbit in the Solarsystem between Year 2000-2100
 // http://denknix.com/astro/doc/html/section003.html
 // http://ssd.jpl.nasa.gov/horizons.cgi
+// http://www.jgiesen.de/kepler/kepler.html   Java applet: keppler equation
 // Author: Andreas Jahnke, aajahnke@aol.com
 //------------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------------
