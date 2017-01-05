@@ -45,16 +45,26 @@ float x_coord;
 float y_coord;
 float z_coord;
 
+float x_earth;
+float y_earth;
+float z_earth;
+
 //------------------------------------------------------------------------------------------------------------------
 void setup() {
 
   Serial.begin(9600);
   delay(500);
-  jd = get_julian_date (04, 01, 2017, 18, 0, 0);
+  jd = get_julian_date (05, 01, 2017, 18, 0, 0);
   //jd = 2457752.8875;
   Serial.println("JD:" + String(jd, DEC));
+  get_object_position (2, jd);//earth
+  get_object_position (0, jd);
   get_object_position (1, jd);
-  get_object_position (2, jd);
+  get_object_position (3, jd);
+  get_object_position (4, jd);
+  get_object_position (5, jd);
+  get_object_position (6, jd);
+  get_object_position (7, jd);
 
 }
 //------------------------------------------------------------------------------------------------------------------
@@ -140,6 +150,27 @@ void get_object_position (int object_number, float jd) {
   calc_vector(x_coord, y_coord, z_coord, "");
   //heliocentric ecliptic coordinates :LO :+ 46:07:16  LAT:-  1:43:29  RAD: 0.72
   //---------------------------------
+  if (object_number == 2) {//object earth
+    x_earth = x_coord;
+    y_earth = y_coord;
+    z_earth = z_coord;
+    calc_vector_subtract(x_earth, 0 , y_earth, 0, z_earth , 0);// earth - sun coordinates
+    Serial.println("Sun Results:");
+    calc_vector(x_coord, y_coord, z_coord, "");
+  }
+  //---------------------------------
+  if (object_number != 2) {//all other objects
+    calc_vector_subtract(x_earth, x_coord , y_earth, y_coord, z_earth , z_coord);// earth - object coordinates
+    Serial.println("Object Results:");
+    calc_vector(x_coord, y_coord, z_coord, "");
+  }
+}
+//------------------------------------------------------------------------------------------------------------------
+void calc_vector_subtract(float xe, float xo, float ye, float yo, float ze, float zo) {
+
+  x_coord = xo - xe;
+  y_coord = yo - ye;
+  z_coord = zo - ze;
 
 }
 //------------------------------------------------------------------------------------------------------------------
@@ -213,9 +244,6 @@ void calc_vector(float x, float y, float z, String mode) { // x = beta / y = tru
     x *= rad;
     y *= rad;
 
-    Serial.println("x:" + String(x, DEC));
-    Serial.println("sin(x):" + String(sin(x), DEC));
-
     x_coord = z * cos(x) * cos(y);
     y_coord = z * cos(x) * sin(y);
     z_coord = z * sin(x);
@@ -225,9 +253,9 @@ void calc_vector(float x, float y, float z, String mode) { // x = beta / y = tru
     z = z_coord; // z_coord:0.0000000000
   }
 
-  Serial.println("x_coord:" + String(x, DEC));
-  Serial.println("y_coord:" + String(y, DEC));
-  Serial.println("z_coord:" + String(z, DEC));
+  //  Serial.println("x_coord:" + String(x, DEC));
+  //  Serial.println("y_coord:" + String(y, DEC));
+  //  Serial.println("z_coord:" + String(z, DEC));
 
 
   // convert to spherical coordinates:
@@ -333,7 +361,3 @@ void rot_z (float alpha) {
   y_coord = y;
 }
 //------------------------------------------------------------------------------------------------------------------
-void print_xyz() {
-
-  Serial.println("xyz:" + String(x_coord, DEC) + "," + String(y_coord, DEC) + "," + String(z_coord, DEC));
-}
