@@ -7,7 +7,7 @@
 // Author: Andreas Jahnke, aajahnke@aol.com
 //------------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------------
-
+#include <math.h>
 // Sechs Bahnelemente:                                                                 / Variable:
 // a: Länge der großen Halbachse                                                       / [0] semi major axis in AE
 // e: numerische Exzentrizität                                                         / [2] eccentricity
@@ -54,7 +54,7 @@ void setup() {
   //jd = 2457752.8875;
   Serial.println("JD:" + String(jd, DEC));
   get_object_position (1, jd);
-  //get_object_position (2, jd);
+  get_object_position (2, jd);
 
 }
 //------------------------------------------------------------------------------------------------------------------
@@ -119,7 +119,7 @@ void get_object_position (int object_number, float jd) {
 
   argumentPerihelion = calc_format_angel_deg (argumentPerihelion);
   Serial.println("argumentPerihelion:" + String(argumentPerihelion, DEC));
-  //----
+  //---------------------------------
   float eccentricAnomaly = calc_eccentricAnomaly(meanAnomaly, eccentricity);
   eccentricAnomaly = calc_format_angel_deg (eccentricAnomaly);
   Serial.println("eccentricAnomaly:" + String(eccentricAnomaly, DEC));
@@ -163,7 +163,7 @@ float calc_eccentricAnomaly (float meanAnomaly, float eccentricity) { //271.60 d
 
   meanAnomaly *= rad;
 
-  int counter = 0;
+  int iterations = 0;
   float eccentricAnomaly = meanAnomaly + (eccentricity * sin(meanAnomaly));
   //Serial.println(String(eccentricAnomaly, DEC));
   float deltaEccentricAnomaly = 1;
@@ -175,9 +175,9 @@ float calc_eccentricAnomaly (float meanAnomaly, float eccentricity) { //271.60 d
     eccentricAnomaly += deltaEccentricAnomaly;
     //Serial.println(String(eccentricAnomaly, DEC));
 
-    counter++;
-    if (counter > 20) {
-      Serial.println("Error:Keplergleichung!!!!!");
+    iterations++;
+    if (iterations > 20) {
+      //Serial.println("Error:Keplergleichung!!!!!");
       eccentricAnomaly = 0;
       break;
     }
@@ -202,7 +202,7 @@ void calc_orbital_coordinates (float semiMajorAxis, float eccentricity, float ec
   //radius        : 0.7225
 
   calc_vector(0, true_Anomaly, radius, "to_rectangular"); // x = beta / y = true_Anomaly / z = radius
-
+  //calc_vector(0, 93.0727, 0.374862, "to_rectangular");//r = 0.374862    v = 93.0727_deg > Test mercury
 }
 //------------------------------------------------------------------------------------------------------------------
 void calc_vector(float x, float y, float z, String mode) { // x = beta / y = true_Anomaly / z = radius  >>>>  true_Anomaly  :   278.841   ,  radius  : 0.7225
@@ -213,13 +213,16 @@ void calc_vector(float x, float y, float z, String mode) { // x = beta / y = tru
     x *= rad;
     y *= rad;
 
-    x = z * cos(x) * cos(y);
-    y = z * cos(x) * sin(y);
-    z = z * sin(x);
+    Serial.println("x:" + String(x, DEC));
+    Serial.println("sin(x):" + String(sin(x), DEC));
 
-    x_coord = x;
-    y_coord = y;
-    z_coord = z;
+    x_coord = z * cos(x) * cos(y);
+    y_coord = z * cos(x) * sin(y);
+    z_coord = z * sin(x);
+
+    x = x_coord; // x_coord:0.1754642100
+    y = y_coord; // y_coord:-0.7004733100
+    z = z_coord; // z_coord:0.0000000000
   }
 
   Serial.println("x_coord:" + String(x, DEC));
@@ -237,7 +240,7 @@ void calc_vector(float x, float y, float z, String mode) { // x = beta / y = tru
 
 
   //get Latitude:
-  float lat = atan2(z, sqrt(x * x + y * y));//0.1328591599494871
+  float lat = atan2(z, (sqrt(x * x + y * y)));//0.1328591599494871
   lat *= deg;// 8.9 deg ???
   lat = calc_format_angel_deg (lat);
   Serial.println("LAT:" + String(lat, DEC));
