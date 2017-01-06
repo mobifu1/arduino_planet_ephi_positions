@@ -7,7 +7,7 @@
 // Author: Andreas Jahnke, aajahnke@aol.com
 //------------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------------
-#include <math.h>
+
 // Sechs Bahnelemente:                                                                 / Variable:
 // a: Länge der großen Halbachse                                                       / [0] semi major axis in AE
 // e: numerische Exzentrizität                                                         / [2] eccentricity
@@ -35,9 +35,9 @@ const float object_data[8][12] = {// a, aΔ, e, eΔ, i, iΔ,  L, LΔ, ω, ωΔ, 
 // global factors:
 const float rad = 0.017453293; // deg to rad
 const float deg = 57.29577951; // rad to deg
-const float pi = 3.1415926535; //PI
-float jd = 0;                  //Juliane date
-float eclipticAngle = (23.43928) * rad;
+const float pi = 3.1415926535; // PI
+float jd = 0;                  // Juliane date
+float eclipticAngle = 23.43928;
 
 //global coordinates:
 float x_coord;
@@ -53,7 +53,7 @@ void setup() {
 
   Serial.begin(9600);
   delay(500);
-  jd = get_julian_date (06, 01, 2017, 18, 0, 0);
+  jd = get_julian_date (06, 01, 2017, 21, 0, 0);
   //jd = 2457752.8875;
   Serial.println("JD:" + String(jd, DEC));
   get_object_position (2, jd);//earth
@@ -93,7 +93,7 @@ float get_julian_date (float day_, float month_, float year_, float hour_, float
 // =========================================================================
 void get_object_position (int object_number, float jd) {
 
-  Serial.println("----------------------------------------------------");
+  Serial.println(F("----------------------------------------------------"));
   Serial.println("Object:" + object_name[object_number]);
 
   float T = (jd - 2451545) / 36525;
@@ -111,30 +111,30 @@ void get_object_position (int object_number, float jd) {
   Serial.println("semiMajorAxis:" + String(semiMajorAxis, DEC));
   Serial.println("eccentricity:" + String(eccentricity, DEC));
 
-  inclination = calc_format_angel_deg (inclination);
+  inclination = calc_format_angle_deg (inclination);
   Serial.println("inclination:" + String(inclination, DEC));
 
-  meanLongitude = calc_format_angel_deg (meanLongitude);
+  meanLongitude = calc_format_angle_deg (meanLongitude);
   Serial.println("meanLongitude:" + String(meanLongitude, DEC));
 
-  longitudePerihelion = calc_format_angel_deg (longitudePerihelion);
+  longitudePerihelion = calc_format_angle_deg (longitudePerihelion);
   Serial.println("longitudePerihelion:" + String(longitudePerihelion, DEC));
 
-  longitudeAscendingNode = calc_format_angel_deg (longitudeAscendingNode);
+  longitudeAscendingNode = calc_format_angle_deg (longitudeAscendingNode);
   Serial.println("longitudeAscendingNode:" + String(longitudeAscendingNode, DEC));
 
-  meanAnomaly = calc_format_angel_deg (meanAnomaly);
+  meanAnomaly = calc_format_angle_deg (meanAnomaly);
   Serial.println("meanAnomaly:" + String(meanAnomaly, DEC));
 
-  argumentPerihelion = calc_format_angel_deg (argumentPerihelion);
+  argumentPerihelion = calc_format_angle_deg (argumentPerihelion);
   Serial.println("argumentPerihelion:" + String(argumentPerihelion, DEC));
   //---------------------------------
   float eccentricAnomaly = calc_eccentricAnomaly(meanAnomaly, eccentricity);
-  eccentricAnomaly = calc_format_angel_deg (eccentricAnomaly);
+  eccentricAnomaly = calc_format_angle_deg (eccentricAnomaly);
   Serial.println("eccentricAnomaly:" + String(eccentricAnomaly, DEC));
   //---------------------------------
   //to orbital Coordinates:
-  Serial.println("orbital coordinates:");
+  Serial.println(F("orbital coordinates:"));
   calc_orbital_coordinates (semiMajorAxis, eccentricity, eccentricAnomaly);
   //---------------------------------
   //to heliocentric ecliptic coordinates:
@@ -144,28 +144,30 @@ void get_object_position (int object_number, float jd) {
   //---------------------------------
   if (object_number == 2) {//object earth
 
-    //to geocentric equatorial coordinates:
-    Serial.println("heliocentric ecliptic result of earth:");
-    //rot_x (eclipticAngle);//rotate x > earth ecliptic angle
-    calc_vector(x_coord, y_coord, z_coord, "");
     x_earth = x_coord;
     y_earth = y_coord;
     z_earth = z_coord;
     //---------------------------------
     //calc the sun position from earth:
-    Serial.println("geocentric equatorial results of sun:");
+    Serial.println(F("geocentric ecliptic results of sun:"));
     calc_vector_subtract(x_earth, 0 , y_earth, 0, z_earth , 0);// earth - sun coordinates
+    calc_vector(x_coord, y_coord, z_coord, "");
+    Serial.println(F("geocentric equatorial results of sun:"));
+    rot_x (eclipticAngle);//rotate x > earth ecliptic angle
     calc_vector(x_coord, y_coord, z_coord, "");
   }
   //---------------------------------
   if (object_number != 2) {//all other objects
-    Serial.println("geocentric equatorial results of object:");
+    Serial.println(F("geocentric ecliptic results of object:"));
     calc_vector_subtract(x_earth, x_coord , y_earth, y_coord, z_earth , z_coord);// earth - object coordinates
+    calc_vector(x_coord, y_coord, z_coord, "");
+    Serial.println(F("geocentric equatorial results of object:"));
+    rot_x (eclipticAngle);//rotate x > earth ecliptic angle
     calc_vector(x_coord, y_coord, z_coord, "");
   }
 }
 //------------------------------------------------------------------------------------------------------------------
-float calc_format_angel_deg (float deg) {  //0-360 degrees
+float calc_format_angle_deg (float deg) {  //0-360 degrees
 
   if (deg >= 360 || deg < 0) {
     if (deg < 0) {
@@ -199,7 +201,7 @@ float calc_eccentricAnomaly (float meanAnomaly, float eccentricity) {
 
     iterations++;
     if (iterations > 20) {
-      Serial.println("Error:Keplergleichung!!!!!");
+      Serial.println(F("Error:Keplergleichung!!!!!"));
       eccentricAnomaly = 0;
       break;
     }
@@ -213,7 +215,7 @@ void calc_orbital_coordinates (float semiMajorAxis, float eccentricity, float ec
   eccentricAnomaly *= rad;
   float true_Anomaly = 2 * atan(sqrt((1 + eccentricity) / (1 - eccentricity)) * tan(eccentricAnomaly / 2));
   true_Anomaly *= deg;
-  true_Anomaly = calc_format_angel_deg (true_Anomaly);
+  true_Anomaly = calc_format_angle_deg (true_Anomaly);
 
   float radius = semiMajorAxis * (1 - (eccentricity * cos(eccentricAnomaly)));
   Serial.println("true_Anomaly:" + String(true_Anomaly, DEC));
@@ -225,7 +227,7 @@ void calc_orbital_coordinates (float semiMajorAxis, float eccentricity, float ec
 void calc_vector(float x, float y, float z, String mode) {
 
   // convert to rectangular coordinates:
-  if (mode == "to_rectangular") {
+  if (mode == F("to_rectangular")) {
 
     x *= rad;
     y *= rad;
@@ -247,16 +249,16 @@ void calc_vector(float x, float y, float z, String mode) {
   //get Longitude:
   float lon = atan2(y, x);
   lon *= deg;
-  lon = calc_format_angel_deg (lon);
+  lon = calc_format_angle_deg (lon);
   Serial.println("LON:" + String(lon, DEC));
-  format_angle("degrees", lon);
+  format_angle(F("degrees"), lon);
 
   //get Latitude:
   float lat = atan2(z, (sqrt(x * x + y * y)));
   lat *= deg;// 8.9 deg ???
-  lat = calc_format_angel_deg (lat);
+  lat = calc_format_angle_deg (lat);
   Serial.println("LAT:" + String(lat, DEC));
-  format_angle("degrees-latitude", lat);
+  format_angle(F("degrees-latitude"), lat);
 
   //getDistance:
   float dist = sqrt(x * x + y * y + z * z);
@@ -272,11 +274,11 @@ void format_angle(String format, float angle) {
   float rest = 0;
   String sign = "";
 
-  if (format == "degrees" || format == "degrees-latitude") {
+  if (format == F("degrees") || format == F("degrees-latitude")) {
 
-    rest = calc_format_angel_deg (angle);
+    rest = calc_format_angle_deg (angle);
 
-    if (format == "degrees-latitude" && rest > 90) {
+    if (format == F("degrees-latitude") && rest > 90) {
       rest -= 360;
     }
     if (rest >= 0) {
@@ -295,18 +297,18 @@ void format_angle(String format, float angle) {
     Serial.println(sign + String(d) + ":" + String(m) + ":" + String(s));
   }
 
-  if (format == "degrees-simple" || format == "degrees-simple-latitude") {
+  if (format == F("degrees-simple") || format == F("degrees-simple-latitude")) {
 
-    float a = calc_format_angel_deg (angle);
-    if (format == "degrees-simple-latitude" && a > 90) {
+    float a = calc_format_angle_deg (angle);
+    if (format == F("degrees-simple-latitude") && a > 90) {
       a -= 360;
     }
     Serial.println("a:" + String(a));
   }
 
-  if (format == "hours") {
+  if (format == F("hours")) {
     rest = 0;
-    rest = calc_format_angel_deg (angle) * 24 / 360;
+    rest = calc_format_angle_deg (angle) * 24 / 360;
     h = (int)(rest);
     rest = (rest - h) * 60;
     m = (int)(rest);
