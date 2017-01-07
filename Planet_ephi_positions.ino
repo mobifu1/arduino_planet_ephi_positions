@@ -48,12 +48,22 @@ float x_earth;
 float y_earth;
 float z_earth;
 
+float azimuth;
+float altitude;
+
+float lat = 51; //GPS Position
+float lon = 10;
+
+float ra;
+float dec;
+float dis;
+
 //------------------------------------------------------------------------------------------------------------------
 void setup() {
 
   Serial.begin(9600);
   delay(500);
-  jd = get_julian_date (06, 01, 2017, 21, 0, 0);
+  jd = get_julian_date (07, 01, 2017, 11, 0, 0);
   //jd = 2457752.8875;
   Serial.println("JD:" + String(jd, DEC));
   get_object_position (2, jd);//earth
@@ -72,9 +82,6 @@ void loop() {
 
 }
 //------------------------------------------------------------------------------------------------------------------
-// =========================================================================
-// julian date
-// =========================================================================
 float get_julian_date (float day_, float month_, float year_, float hour_, float minute_, float seconds_) { // UTC
 
   if (month_ <= 2) {
@@ -98,6 +105,9 @@ void get_object_position (int object_number, float jd) {
 
   float T = (jd - 2451545) / 36525;
   Serial.println("T:" + String(T, DEC));
+
+  float sidereal_time = calc_siderealTime (jd, lon);
+  Serial.println("ST:" + String(sidereal_time, DEC));
 
   float semiMajorAxis = object_data[object_number][0] + (T * object_data[object_number][1]); // offset + T * delta
   float eccentricity = object_data[object_number][2] + (T * object_data[object_number][3]);
@@ -155,6 +165,7 @@ void get_object_position (int object_number, float jd) {
     Serial.println(F("geocentric equatorial results of sun:"));
     rot_x (eclipticAngle);//rotate x > earth ecliptic angle
     calc_vector(x_coord, y_coord, z_coord, "");
+    calc_azimuthal(ra, dec, lat, sidereal_time);
   }
   //---------------------------------
   if (object_number != 2) {//all other objects
@@ -164,6 +175,7 @@ void get_object_position (int object_number, float jd) {
     Serial.println(F("geocentric equatorial results of object:"));
     rot_x (eclipticAngle);//rotate x > earth ecliptic angle
     calc_vector(x_coord, y_coord, z_coord, "");
+    calc_azimuthal(ra, dec, lat, sidereal_time);
   }
 }
 //------------------------------------------------------------------------------------------------------------------
@@ -250,27 +262,29 @@ void calc_vector(float x, float y, float z, String mode) {
   float lon = atan2(y, x);
   lon *= deg;
   lon = calc_format_angle_deg (lon);
+  ra = lon;
   Serial.println("LON:" + String(lon, DEC));
-  format_angle(F("degrees"), lon);
+  format_angle(lon, F("degrees"));
 
   //get Latitude:
   float lat = atan2(z, (sqrt(x * x + y * y)));
-  lat *= deg;// 8.9 deg ???
+  lat *= deg;
   lat = calc_format_angle_deg (lat);
+  dec = lat;
   Serial.println("LAT:" + String(lat, DEC));
-  format_angle(F("degrees-latitude"), lat);
+  format_angle(lat, F("degrees-latitude"));
 
   //getDistance:
   float dist = sqrt(x * x + y * y + z * z);
+  dis = dist;
   Serial.println("DIS:" + String(dist, DEC));
 }
 //------------------------------------------------------------------------------------------------------------------
-void format_angle(String format, float angle) {
+void format_angle(float angle, String format) {
 
   int d = 0;
   int m = 0;
   int s = 0;
-  int h = 0;
   float rest = 0;
   String sign = "";
 
@@ -295,26 +309,6 @@ void format_angle(String format, float angle) {
     rest = (rest - (float)m) * 60;
     s = (int)rest;
     Serial.println(sign + String(d) + ":" + String(m) + ":" + String(s));
-  }
-
-  if (format == F("degrees-simple") || format == F("degrees-simple-latitude")) {
-
-    float a = calc_format_angle_deg (angle);
-    if (format == F("degrees-simple-latitude") && a > 90) {
-      a -= 360;
-    }
-    Serial.println("a:" + String(a));
-  }
-
-  if (format == F("hours")) {
-    rest = 0;
-    rest = calc_format_angle_deg (angle) * 24 / 360;
-    h = (int)(rest);
-    rest = (rest - h) * 60;
-    m = (int)(rest);
-    rest = (rest - m) * 60;
-    s = (int)(rest);
-    Serial.println(sign + String(h) + ":" + String(m) + ":" + String(s));
   }
 }
 //--------------------------------------------------------------------------------------------------------------------
@@ -350,5 +344,48 @@ void calc_vector_subtract(float xe, float xo, float ye, float yo, float ze, floa
   x_coord = xo - xe;
   y_coord = yo - ye;
   z_coord = zo - ze;
+}
+//------------------------------------------------------------------------------------------------------------------
+float calc_siderealTime (float jd, float geoLongitude) {
+
+  float siderial_time = 6.656306 + 24.0657098242 * (jd - 2445700.5);
+  siderial_time = siderial_time * pi / 12;
+  if (geoLongitude) {
+    siderial_time += geoLongitude;
+  }
+  siderial_time *= deg;
+  siderial_time = calc_format_angle_deg (siderial_time);
+  siderial_time *= rad;
+
+  return siderial_time;
+}
+//------------------------------------------------------------------------------------------------------------------
+void calc_azimuthal(float ra, float dec, float lat, float sidereal_time) {
+
+  float ha = sidereal_time - ra;//ha = hours of angle  (-180 to 180 deg)
+
+  if (ha < -180) ha += 360;
+  if (ha > 180) ha -= 360;
+  if (dec < -90) dec += 360;
+  if (dec > 90) dec -= 360;
+
+  ha *= rad;
+  dec *= rad;
+
+  float x = cos(ha) * cos(dec);
+  float y = sin(ha) * cos(dec);
+  float z = sin(dec);
+
+  float xhor = x * sin(lat) - z * cos(lat);
+  float yhor = y;
+  float zhor = x * cos(lat) + z * sin(lat);
+
+  azimuth = atan2(yhor, xhor);// + 180; //+180 ???
+  altitude = atan2(zhor, sqrt(xhor * xhor + yhor * yhor));
+  azimuth *= deg;//0=north, 90= east, 180=south, 270=west
+  altitude *= deg;//0=horizon, 90=zenith, -90=down
+  Serial.println("azimuth:" + String(azimuth, DEC));
+  Serial.println("altitude:" + String(altitude, DEC));
+  Serial.println("distance:" + String(dis, DEC));
 }
 //------------------------------------------------------------------------------------------------------------------
