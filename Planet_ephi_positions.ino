@@ -36,7 +36,8 @@ const float object_data[8][12] = {// a, aΔ, e, eΔ, i, iΔ,  L, LΔ, ω, ωΔ, 
 const float rad = 0.017453293; // deg to rad
 const float deg = 57.29577951; // rad to deg
 const float pi = 3.1415926535; // PI
-float jd = 0;                  // Juliane date
+float jd;                      // Juliane date
+float jd_frac;
 float eclipticAngle = 23.43928;
 
 //global coordinates:
@@ -63,17 +64,16 @@ void setup() {
 
   Serial.begin(9600);
   delay(500);
-  jd = get_julian_date (07, 01, 2017, 11, 0, 0);
-  //jd = 2457752.8875;
-  Serial.println("JD:" + String(jd, DEC));
-  get_object_position (2, jd);//earth
-  get_object_position (0, jd);
-  //  get_object_position (1, jd);
-  //  get_object_position (3, jd);
-  //  get_object_position (4, jd);
-  //  get_object_position (5, jd);
-  //  get_object_position (6, jd);
-  //  get_object_position (7, jd);
+  jd = get_julian_date (7, 1, 2017, 21, 0, 0);
+  Serial.println("JD:" + String(jd, DEC) + "+" + String(jd_frac, DEC)); // jd = 2457761.375000;
+  get_object_position (2, jd, jd_frac);//earth
+  get_object_position (0, jd, jd_frac);
+  //  get_object_position (1, jd, jd_frac);
+  //  get_object_position (3, jd, jd_frac);
+  //  get_object_position (4, jd, jd_frac);
+  //  get_object_position (5, jd, jd_frac);
+  //  get_object_position (6, jd, jd_frac);
+  //  get_object_position (7, jd, jd_frac);
 
 }
 //------------------------------------------------------------------------------------------------------------------
@@ -89,24 +89,31 @@ float get_julian_date (float day_, float month_, float year_, float hour_, float
     month_ += 12;
   }
 
-  float H = (hour_ / 24) + (minute_ / 1440) + (seconds_ / 86400);
-  float B = 2 - (long)(year_ / 100)  + (long)(year_ / 100 / 4);
-  float jd = (long)(365.25 * (year_ + 4716)) + (long)(30.6001 * (month_ + 1)) + day_ + B + H - 1524.5;
+  long A = year_ / 100;
+  long B = A / 4;
+  long C = 2 - A + B;
+  long E = 365.25 * (year_ + 4716);
+  long F = 30.6001 * (month_ + 1);
+  jd = C + day_ + E + F - 1524.5;
+  jd_frac = (hour_ / 24) + (minute_ / 1440) + (seconds_ / 86400);
   return jd;
 
 }
+//------------------------------------------------------------------------------------------------------------------
 // =========================================================================
 // object position
 // =========================================================================
-void get_object_position (int object_number, float jd) {
+void get_object_position (int object_number, float jd, float jd_frac) {
 
   Serial.println(F("----------------------------------------------------"));
   Serial.println("Object:" + object_name[object_number]);
 
-  float T = (jd - 2451545) / 36525;
+  float T = jd - 2451545;
+  T += jd_frac;
+  T /= 36525;
   Serial.println("T:" + String(T, DEC));
 
-  float sidereal_time = calc_siderealTime (jd, lon);
+  float sidereal_time = calc_siderealTime (jd, jd_frac, lon);
   Serial.println("ST:" + String(sidereal_time, DEC));
 
   float semiMajorAxis = object_data[object_number][0] + (T * object_data[object_number][1]); // offset + T * delta
@@ -346,12 +353,14 @@ void calc_vector_subtract(float xe, float xo, float ye, float yo, float ze, floa
   z_coord = zo - ze;
 }
 //------------------------------------------------------------------------------------------------------------------
-float calc_siderealTime (float jd, float geoLongitude) {
+float calc_siderealTime (float jd, float jd_frac, float lon) { //03:50:00 = 2457761.375
 
-  float siderial_time = 6.656306 + 24.0657098242 * (jd - 2445700.5);
+  float siderial_time = jd - 2445700.5;
+  siderial_time += jd_frac;
+  siderial_time = siderial_time * 24.0657098242 + 6.656306;
   siderial_time = siderial_time * pi / 12;
-  if (geoLongitude) {
-    siderial_time += geoLongitude;
+  if (lon) {
+    siderial_time += lon;
   }
   siderial_time *= deg;
   siderial_time = calc_format_angle_deg (siderial_time);
@@ -382,7 +391,7 @@ void calc_azimuthal(float ra, float dec, float lat, float sidereal_time) {
 
   azimuth = atan2(yhor, xhor);// + 180; //+180 ???
   altitude = atan2(zhor, sqrt(xhor * xhor + yhor * yhor));
-  azimuth *= deg;//0=north, 90= east, 180=south, 270=west
+  azimuth *= deg;//0=north, 90=east, 180=south, 270=west
   altitude *= deg;//0=horizon, 90=zenith, -90=down
   Serial.println("azimuth:" + String(azimuth, DEC));
   Serial.println("altitude:" + String(altitude, DEC));
