@@ -53,9 +53,9 @@ float azimuth;
 float altitude;
 
 float lat = 51; //GPS Position
-float lon = 10;
+float lon = 10; //deg
 
-float ra;
+float ra; //deg
 float dec;
 float dis;
 
@@ -64,7 +64,7 @@ void setup() {
 
   Serial.begin(9600);
   delay(500);
-  jd = get_julian_date (7, 1, 2017, 21, 0, 0);
+  jd = get_julian_date (8, 1, 2017, 15, 0, 0);//UTC
   Serial.println("JD:" + String(jd, DEC) + "+" + String(jd_frac, DEC)); // jd = 2457761.375000;
   get_object_position (2, jd, jd_frac);//earth
   get_object_position (0, jd, jd_frac);
@@ -74,7 +74,6 @@ void setup() {
   //  get_object_position (5, jd, jd_frac);
   //  get_object_position (6, jd, jd_frac);
   //  get_object_position (7, jd, jd_frac);
-
 }
 //------------------------------------------------------------------------------------------------------------------
 void loop() {
@@ -97,7 +96,6 @@ float get_julian_date (float day_, float month_, float year_, float hour_, float
   jd = C + day_ + E + F - 1524.5;
   jd_frac = (hour_ / 24) + (minute_ / 1440) + (seconds_ / 86400);
   return jd;
-
 }
 //------------------------------------------------------------------------------------------------------------------
 // =========================================================================
@@ -172,7 +170,7 @@ void get_object_position (int object_number, float jd, float jd_frac) {
     Serial.println(F("geocentric equatorial results of sun:"));
     rot_x (eclipticAngle);//rotate x > earth ecliptic angle
     calc_vector(x_coord, y_coord, z_coord, "");
-    calc_azimuthal(ra, dec, lat, sidereal_time);
+    calc_azimuthal_position(ra, dec, lat, sidereal_time);
   }
   //---------------------------------
   if (object_number != 2) {//all other objects
@@ -182,7 +180,7 @@ void get_object_position (int object_number, float jd, float jd_frac) {
     Serial.println(F("geocentric equatorial results of object:"));
     rot_x (eclipticAngle);//rotate x > earth ecliptic angle
     calc_vector(x_coord, y_coord, z_coord, "");
-    calc_azimuthal(ra, dec, lat, sidereal_time);
+    calc_azimuthal_position(ra, dec, lat, sidereal_time);
   }
 }
 //------------------------------------------------------------------------------------------------------------------
@@ -355,23 +353,18 @@ void calc_vector_subtract(float xe, float xo, float ye, float yo, float ze, floa
 //------------------------------------------------------------------------------------------------------------------
 float calc_siderealTime (float jd, float jd_frac, float lon) { //03:50:00 = 2457761.375
 
-  float siderial_time = jd - 2445700.5;
-  siderial_time += jd_frac;
-  siderial_time = siderial_time * 24.0657098242 + 6.656306;
-  siderial_time = siderial_time * pi / 12;
-  if (lon) {
-    siderial_time += lon;
-  }
-  siderial_time *= deg;
-  siderial_time = calc_format_angle_deg (siderial_time);
-  siderial_time *= rad;
-
+  float T = jd - 2451545;
+  T /= 36525;
+  float UT = jd_frac * 24;
+  float T0 = 6.697374558 + (2400.051336 * T) + (0.000025862 * pow(T, 2)) + (UT * 1.0027379093);
+  T0 = fmod(T0, 24);
+  float siderial_time = T0 + (lon / 15);
   return siderial_time;
 }
 //------------------------------------------------------------------------------------------------------------------
-void calc_azimuthal(float ra, float dec, float lat, float sidereal_time) {
+void calc_azimuthal_position(float ra, float dec, float lat, float sidereal_time) {
 
-  float ha = sidereal_time - ra;//ha = hours of angle  (-180 to 180 deg)
+  float ha = (sidereal_time * 15) - ra; //ha = hours of angle  (-180 to 180 deg)
 
   if (ha < -180) ha += 360;
   if (ha > 180) ha -= 360;
@@ -389,7 +382,7 @@ void calc_azimuthal(float ra, float dec, float lat, float sidereal_time) {
   float yhor = y;
   float zhor = x * cos(lat) + z * sin(lat);
 
-  azimuth = atan2(yhor, xhor);// + 180; //+180 ???
+  azimuth = atan2(yhor, xhor) + pi;
   altitude = atan2(zhor, sqrt(xhor * xhor + yhor * yhor));
   azimuth *= deg;//0=north, 90=east, 180=south, 270=west
   altitude *= deg;//0=horizon, 90=zenith, -90=down
