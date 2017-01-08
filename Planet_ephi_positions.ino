@@ -64,16 +64,16 @@ void setup() {
 
   Serial.begin(9600);
   delay(500);
-  jd = get_julian_date (8, 1, 2017, 15, 0, 0);//UTC
+  jd = get_julian_date (8, 1, 2017, 16, 0, 0);//UTC
   Serial.println("JD:" + String(jd, DEC) + "+" + String(jd_frac, DEC)); // jd = 2457761.375000;
   get_object_position (2, jd, jd_frac);//earth
   get_object_position (0, jd, jd_frac);
-  //  get_object_position (1, jd, jd_frac);
-  //  get_object_position (3, jd, jd_frac);
-  //  get_object_position (4, jd, jd_frac);
-  //  get_object_position (5, jd, jd_frac);
-  //  get_object_position (6, jd, jd_frac);
-  //  get_object_position (7, jd, jd_frac);
+  get_object_position (1, jd, jd_frac);
+  get_object_position (3, jd, jd_frac);
+  get_object_position (4, jd, jd_frac);
+  get_object_position (5, jd, jd_frac);
+  get_object_position (6, jd, jd_frac);
+  get_object_position (7, jd, jd_frac);
 }
 //------------------------------------------------------------------------------------------------------------------
 void loop() {
@@ -356,7 +356,7 @@ float calc_siderealTime (float jd, float jd_frac, float lon) { //03:50:00 = 2457
   float T = jd - 2451545;
   T /= 36525;
   float UT = jd_frac * 24;
-  float T0 = 6.697374558 + (2400.051336 * T) + (0.000025862 * pow(T, 2)) + (UT * 1.0027379093);
+  float T0 = 6.697374558 + (2400.051336 * T) + (0.000025862 * T * T) + (UT * 1.0027379093);
   T0 = fmod(T0, 24);
   float siderial_time = T0 + (lon / 15);
   return siderial_time;
@@ -378,7 +378,7 @@ void calc_azimuthal_position(float ra, float dec, float lat, float sidereal_time
   float y = sin(ha) * cos(dec);
   float z = sin(dec);
 
-  float xhor = x * sin(lat) - z * cos(lat);
+  float xhor = x * sin(lat) - z * cos(lat);//horizon position
   float yhor = y;
   float zhor = x * cos(lat) + z * sin(lat);
 
@@ -386,6 +386,7 @@ void calc_azimuthal_position(float ra, float dec, float lat, float sidereal_time
   altitude = atan2(zhor, sqrt(xhor * xhor + yhor * yhor));
   azimuth *= deg;//0=north, 90=east, 180=south, 270=west
   altitude *= deg;//0=horizon, 90=zenith, -90=down
+  altitude -= 11; //Error -11deg >>> find out what is the problem
   Serial.println("azimuth:" + String(azimuth, DEC));
   Serial.println("altitude:" + String(altitude, DEC));
   Serial.println("distance:" + String(dis, DEC));
