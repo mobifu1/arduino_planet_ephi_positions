@@ -52,8 +52,8 @@ float z_earth;
 float azimuth;
 float altitude;
 
-float lat = 51; //GPS Position
-float lon = 10; //deg
+float lat = 53.5; //GPS Position of Hamburg in deg
+float lon = 10;
 
 float ra; //deg
 float dec;
@@ -365,7 +365,6 @@ float calc_siderealTime (float jd, float jd_frac, float lon) { //03:50:00 = 2457
 void calc_azimuthal_position(float ra, float dec, float lat, float sidereal_time) {
 
   float ha = (sidereal_time * 15) - ra; //ha = hours of angle  (-180 to 180 deg)
-
   if (ha < -180) ha += 360;
   if (ha > 180) ha -= 360;
   if (dec < -90) dec += 360;
@@ -373,20 +372,21 @@ void calc_azimuthal_position(float ra, float dec, float lat, float sidereal_time
 
   ha *= rad;
   dec *= rad;
+  lat *= rad;
 
   float x = cos(ha) * cos(dec);
   float y = sin(ha) * cos(dec);
   float z = sin(dec);
 
-  float xhor = x * sin(lat) - z * cos(lat);//horizon position
-  float yhor = y;
-  float zhor = x * cos(lat) + z * sin(lat);
+  //rotate y
+  float x_hor = x * sin(lat) - z * cos(lat);//horizon position
+  float y_hor = y;
+  float z_hor = x * cos(lat) + z * sin(lat);
 
-  azimuth = atan2(yhor, xhor) + pi;
-  altitude = atan2(zhor, sqrt(xhor * xhor + yhor * yhor));
+  azimuth = atan2(y_hor, x_hor) + pi;
+  altitude = atan2(z_hor, sqrt(x_hor * x_hor + y_hor * y_hor));
   azimuth *= deg;//0=north, 90=east, 180=south, 270=west
   altitude *= deg;//0=horizon, 90=zenith, -90=down
-  altitude -= 11; //Error -11deg >>> find out what is the problem
   Serial.println("azimuth:" + String(azimuth, DEC));
   Serial.println("altitude:" + String(altitude, DEC));
   Serial.println("distance:" + String(dis, DEC));
