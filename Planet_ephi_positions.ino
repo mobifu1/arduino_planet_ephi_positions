@@ -21,15 +21,15 @@ String object_name[8] = {"Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn
 String star_name[1] = {"Sun"};
 
 // http://ssd.jpl.nasa.gov/txt/aprx_pos_planets.pdf
-const float object_data[8][12] = {// a, aΔ, e, eΔ, i, iΔ,  L, LΔ, ω, ωΔ, Ω, ΩΔ  >>> L2000
-  {0.38709927, 0.00000037, 0.20563593, 0.00001906, 7.00497902, -0.00594749, 252.25032350, 149472.67411175, 77.45779628, 0.16047689, 48.33076593, -0.12534081},  // Mercury
-  {0.72333566, 0.00000390, 0.00677672, -0.00004107, 3.39467605, -0.00078890, 181.97909950, 58517.81538729, 131.60246718, 0.00268329, 76.67984255, -0.27769418}, // Venus
-  {1.00000261, 0.00000562, 0.01671123, -0.00004392, -0.00001531, -0.01294668, 100.46457166, 35999.37244981, 102.93768193, 0.32327364, 0, 0},                    // Earth
-  {1.52371034, 0.00001847, 0.09339410, 0.00007882, 1.84969142, -0.00813131, -4.55343205, 19140.30268499, -23.94362959, 0.44441088, 49.55953891, -0.29257343},   // Mars
-  {5.20288700, -0.00011607, 0.04838624, -0.00013253, 1.30439695, -0.00183714, 34.39644051, 3034.74612775, 14.72847983, 0.21252668, 100.47390909, 0.20469106},   // Jupiter
-  {9.53667594, -0.00125060, 0.05386179, -0.00050991, 2.48599187, 0.00193609, 49.95424423, 1222.49362201, 92.59887831, -0.41897216, 113.66242448, -0.28867794},  // Saturn
-  {19.1891646, -0.00196176, 0.04725744, -0.00004397, 0.77263783, -0.00242939, 313.23810451, 428.48202785, 170.95427630, 0.40805281, 074.01692503, 0.04240589},  // Uranus
-  {30.06992276, 0.00026291, 0.00859048, 0.00005105, 1.77004347, 0.00035372, -55.12002969, 218.45945325, 44.96476227, -0.32241464, 131.78422574, -0.00508664},   // Neptun
+const float object_data[8][13] = {// a, aΔ, e, eΔ, i, iΔ,  L, LΔ, ω, ωΔ, Ω, ΩΔ  >>> L2000 , diameter
+  {0.38709927, 0.00000037, 0.20563593, 0.00001906, 7.00497902, -0.00594749, 252.25032350, 149472.67411175, 77.45779628, 0.16047689, 48.33076593, -0.12534081, 6.74},   // Mercury
+  {0.72333566, 0.00000390, 0.00677672, -0.00004107, 3.39467605, -0.00078890, 181.97909950, 58517.81538729, 131.60246718, 0.00268329, 76.67984255, -0.27769418, 16.92}, // Venus
+  {1.00000261, 0.00000562, 0.01671123, -0.00004392, -0.00001531, -0.01294668, 100.46457166, 35999.37244981, 102.93768193, 0.32327364, 0, 0, 0},                        // Earth
+  {1.52371034, 0.00001847, 0.09339410, 0.00007882, 1.84969142, -0.00813131, -4.55343205, 19140.30268499, -23.94362959, 0.44441088, 49.55953891, -0.29257343, 9.31},    // Mars
+  {5.20288700, -0.00011607, 0.04838624, -0.00013253, 1.30439695, -0.00183714, 34.39644051, 3034.74612775, 14.72847983, 0.21252668, 100.47390909, 0.20469106, 191},     // Jupiter
+  {9.53667594, -0.00125060, 0.05386179, -0.00050991, 2.48599187, 0.00193609, 49.95424423, 1222.49362201, 92.59887831, -0.41897216, 113.66242448, -0.28867794, 157},    // Saturn
+  {19.1891646, -0.00196176, 0.04725744, -0.00004397, 0.77263783, -0.00242939, 313.23810451, 428.48202785, 170.95427630, 0.40805281, 074.01692503, 0.04240589, 64},     // Uranus
+  {30.06992276, 0.00026291, 0.00859048, 0.00005105, 1.77004347, 0.00035372, -55.12002969, 218.45945325, 44.96476227, -0.32241464, 131.78422574, -0.00508664, 61.5},    // Neptun
 };
 
 // global factors:
@@ -64,7 +64,7 @@ void setup() {
 
   Serial.begin(9600);
   delay(500);
-  jd = get_julian_date (8, 1, 2017, 16, 0, 0);//UTC
+  jd = get_julian_date (18, 1, 2017, 19, 0, 0);//UTC
   Serial.println("JD:" + String(jd, DEC) + "+" + String(jd_frac, DEC)); // jd = 2457761.375000;
   get_object_position (2, jd, jd_frac);//earth
   get_object_position (0, jd, jd_frac);
@@ -181,6 +181,7 @@ void get_object_position (int object_number, float jd, float jd_frac) {
     rot_x (eclipticAngle);//rotate x > earth ecliptic angle
     calc_vector(x_coord, y_coord, z_coord, "");
     calc_azimuthal_position(ra, dec, lat, sidereal_time);
+    calc_magnitude(object_number, dis);
   }
 }
 //------------------------------------------------------------------------------------------------------------------
@@ -390,5 +391,37 @@ void calc_azimuthal_position(float ra, float dec, float lat, float sidereal_time
   Serial.println("azimuth:" + String(azimuth, DEC));
   Serial.println("altitude:" + String(altitude, DEC));
   Serial.println("distance:" + String(dis, DEC));
+}
+//------------------------------------------------------------------------------------------------------------------
+void calc_magnitude(int object_number, float R) {// R = geocentric distance in AE
+
+  float apparent_diameter = object_data[object_number][12] / R;
+  Serial.println("apparent diameter:" + String(apparent_diameter, 2));//bogen seconds
+
+  float r = object_data[object_number][0];//r = heliocentric distance in AE
+  float s = object_data[2][0];// distance earth to sun in AE
+
+  float elon = acos((s * s + R * R - r * r) / (2 * s * R));
+  elon *= deg;
+  calc_format_angle_deg (elon);
+  Serial.println("elon:" + String(elon, 2));
+
+  float phase_angle = acos((r * r + R * R - s * s) / (2 * r * R));
+  float phase = (1 + cos(phase_angle)) / 2;
+  phase_angle *= deg;
+  calc_format_angle_deg (phase_angle);
+  Serial.println("phase_angle:" + String(phase_angle, 2));
+  Serial.println("phase:" + String(phase, 2));
+
+  float magnitude;
+  if (object_number == 0) magnitude = -0.36 + 5 * log10(r * R) + 0.027 * phase_angle;//Mercury
+  if (object_number == 1) magnitude = -4.34 + 5 * log10(r * R) + 0.013 * phase_angle;//Venus
+  if (object_number == 3) magnitude = -1.51 + 5 * log10(r * R) + 0.016 * phase_angle;//Mars
+  if (object_number == 4) magnitude = -9.25 + 5 * log10(r * R) + 0.014 * phase_angle;//Jupiter
+  if (object_number == 5) magnitude = -9.00 + 5 * log10(r * R) + 0.044 * phase_angle;//Saturn
+  if (object_number == 6) magnitude = -7.15 + 5 * log10(r * R) + 0.001 * phase_angle;//Uranus
+  if (object_number == 7) magnitude = -6.90 + 5 * log10(r * R) + 0.001 * phase_angle;//Neptune
+  Serial.println("magnitude:" + String(magnitude, 2));
+
 }
 //------------------------------------------------------------------------------------------------------------------
