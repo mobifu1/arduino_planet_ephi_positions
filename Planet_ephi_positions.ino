@@ -403,13 +403,11 @@ void calc_magnitude(int object_number, float R) {// R = geocentric distance in A
 
   float elon = acos((s * s + R * R - r * r) / (2 * s * R));
   elon *= deg;
-  calc_format_angle_deg (elon);
   Serial.println("elongation:" + String(elon, 2));
 
   float phase_angle = acos((r * r + R * R - s * s) / (2 * r * R));
   float phase = (1 + cos(phase_angle)) / 2;
   phase_angle *= deg;
-  calc_format_angle_deg (phase_angle);
   Serial.println("phase angle:" + String(phase_angle, 2));
   Serial.println("phase:" + String(phase, 2));
 
@@ -423,6 +421,5 @@ void calc_magnitude(int object_number, float R) {// R = geocentric distance in A
   if (object_number == 6) magnitude = -7.15 + 5 * log10(r * R) + 0.001 * phase_angle;             //Uranus
   if (object_number == 7) magnitude = -6.90 + 5 * log10(r * R) + 0.001 * phase_angle;             //Neptune
   Serial.println("magnitude:" + String(magnitude, 2));
-
 }
 //------------------------------------------------------------------------------------------------------------------
