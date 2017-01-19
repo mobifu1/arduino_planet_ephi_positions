@@ -404,23 +404,24 @@ void calc_magnitude(int object_number, float R) {// R = geocentric distance in A
   float elon = acos((s * s + R * R - r * r) / (2 * s * R));
   elon *= deg;
   calc_format_angle_deg (elon);
-  Serial.println("elon:" + String(elon, 2));
+  Serial.println("elongation:" + String(elon, 2));
 
   float phase_angle = acos((r * r + R * R - s * s) / (2 * r * R));
   float phase = (1 + cos(phase_angle)) / 2;
   phase_angle *= deg;
   calc_format_angle_deg (phase_angle);
-  Serial.println("phase_angle:" + String(phase_angle, 2));
+  Serial.println("phase angle:" + String(phase_angle, 2));
   Serial.println("phase:" + String(phase, 2));
 
-  float magnitude;
-  if (object_number == 0) magnitude = -0.36 + 5 * log10(r * R) + 0.027 * phase_angle;//Mercury
-  if (object_number == 1) magnitude = -4.34 + 5 * log10(r * R) + 0.013 * phase_angle;//Venus
-  if (object_number == 3) magnitude = -1.51 + 5 * log10(r * R) + 0.016 * phase_angle;//Mars
-  if (object_number == 4) magnitude = -9.25 + 5 * log10(r * R) + 0.014 * phase_angle;//Jupiter
-  if (object_number == 5) magnitude = -9.00 + 5 * log10(r * R) + 0.044 * phase_angle;//Saturn
-  if (object_number == 6) magnitude = -7.15 + 5 * log10(r * R) + 0.001 * phase_angle;//Uranus
-  if (object_number == 7) magnitude = -6.90 + 5 * log10(r * R) + 0.001 * phase_angle;//Neptune
+  float magnitude = 0;
+  float ring_magn = -0.74;
+  if (object_number == 0) magnitude = -0.36 + 5 * log10(r * R) + 0.027 * phase_angle;             //Mercury
+  if (object_number == 1) magnitude = -4.34 + 5 * log10(r * R) + 0.013 * phase_angle;             //Venus
+  if (object_number == 3) magnitude = -1.51 + 5 * log10(r * R) + 0.016 * phase_angle;             //Mars
+  if (object_number == 4) magnitude = -9.25 + 5 * log10(r * R) + 0.014 * phase_angle;             //Jupiter
+  if (object_number == 5) magnitude = -9.00 + 5 * log10(r * R) + 0.044 * phase_angle + ring_magn; //Saturn
+  if (object_number == 6) magnitude = -7.15 + 5 * log10(r * R) + 0.001 * phase_angle;             //Uranus
+  if (object_number == 7) magnitude = -6.90 + 5 * log10(r * R) + 0.001 * phase_angle;             //Neptune
   Serial.println("magnitude:" + String(magnitude, 2));
 
 }
