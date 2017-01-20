@@ -57,14 +57,16 @@ float lon = 10;
 
 float ra; //deg
 float dec;
-float dis;
+float dist_earth_to_object;
+float dist_earth_to_sun;
+float dist_object_to_sun;
 
 //------------------------------------------------------------------------------------------------------------------
 void setup() {
 
   Serial.begin(9600);
   delay(500);
-  jd = get_julian_date (18, 1, 2017, 19, 0, 0);//UTC
+  jd = get_julian_date (20, 1, 2017, 17, 0, 0);//UTC
   Serial.println("JD:" + String(jd, DEC) + "+" + String(jd_frac, DEC)); // jd = 2457761.375000;
   get_object_position (2, jd, jd_frac);//earth
   get_object_position (0, jd, jd_frac);
@@ -170,6 +172,7 @@ void get_object_position (int object_number, float jd, float jd_frac) {
     Serial.println(F("geocentric equatorial results of sun:"));
     rot_x (eclipticAngle);//rotate x > earth ecliptic angle
     calc_vector(x_coord, y_coord, z_coord, "");
+    dist_earth_to_sun = dist_earth_to_object;
     calc_azimuthal_position(ra, dec, lat, sidereal_time);
   }
   //---------------------------------
@@ -181,7 +184,7 @@ void get_object_position (int object_number, float jd, float jd_frac) {
     rot_x (eclipticAngle);//rotate x > earth ecliptic angle
     calc_vector(x_coord, y_coord, z_coord, "");
     calc_azimuthal_position(ra, dec, lat, sidereal_time);
-    calc_magnitude(object_number, dis);
+    calc_magnitude(object_number, dist_earth_to_object);
   }
 }
 //------------------------------------------------------------------------------------------------------------------
@@ -236,6 +239,7 @@ void calc_orbital_coordinates (float semiMajorAxis, float eccentricity, float ec
   true_Anomaly = calc_format_angle_deg (true_Anomaly);
 
   float radius = semiMajorAxis * (1 - (eccentricity * cos(eccentricAnomaly)));
+  dist_object_to_sun = radius;
   Serial.println("true_Anomaly:" + String(true_Anomaly, DEC));
   Serial.println("radius:" + String(radius, DEC));
 
@@ -281,9 +285,8 @@ void calc_vector(float x, float y, float z, String mode) {
   format_angle(lat, F("degrees-latitude"));
 
   //getDistance:
-  float dist = sqrt(x * x + y * y + z * z);
-  dis = dist;
-  Serial.println("DIS:" + String(dist, DEC));
+  dist_earth_to_object = sqrt(x * x + y * y + z * z);
+  Serial.println("DIS:" + String(dist_earth_to_object, DEC));
 }
 //------------------------------------------------------------------------------------------------------------------
 void format_angle(float angle, String format) {
@@ -390,16 +393,18 @@ void calc_azimuthal_position(float ra, float dec, float lat, float sidereal_time
   altitude *= deg;//0=horizon, 90=zenith, -90=down
   Serial.println("azimuth:" + String(azimuth, DEC));
   Serial.println("altitude:" + String(altitude, DEC));
-  Serial.println("distance:" + String(dis, DEC));
+  Serial.println("distance:" + String(dist_earth_to_object, DEC));
 }
 //------------------------------------------------------------------------------------------------------------------
-void calc_magnitude(int object_number, float R) {// R = geocentric distance in AE
+void calc_magnitude(int object_number, float R) {// R = distance earth to object in AE
 
   float apparent_diameter = object_data[object_number][12] / R;
-  Serial.println("apparent diameter:" + String(apparent_diameter, 2));//bogen seconds
+  Serial.print("apparent diameter:" + String(apparent_diameter, 2));//bogen seconds
+  if (object_number == 5)Serial.print(" + ring = " + String(apparent_diameter + 20, 2)); //bogen seconds
+  Serial.println();
 
-  float r = object_data[object_number][0];//r = heliocentric distance in AE
-  float s = object_data[2][0];// distance earth to sun in AE
+  float r = dist_object_to_sun;//r = distance in AE
+  float s = dist_earth_to_sun;//s = distance in AE
 
   float elon = acos((s * s + R * R - r * r) / (2 * s * R));
   elon *= deg;
